@@ -5,7 +5,7 @@ check process haproxy
   stop program "/var/vcap/jobs/bpm/bin/bpm stop haproxy"
   group vcap
 <%- else -%>
-  with pidfile /var/vcap/sys/run/haproxy/pid
+  with pidfile /var/vcap/sys/run/haproxy/haproxy.pid
   start program /var/vcap/jobs/haproxy/bin/haproxy_wrapper as uid 0 as gid 0
   stop program "/bin/sh -c 'kill -s SIGTERM `cat /var/run/process.pid`'"
   group vcap

@@ -78,8 +78,10 @@ ttar < /var/vcap/jobs/haproxy/config/cidrs.ttar
 #clean up leftovers from previous run
 cleanup_daemon
 
+<%- if p("ha_proxy.use_bpm") -%>
 # ensure we shut down the daemonized process correctly on exit
 trap shutdown QUIT INT TERM EXIT
+<%- end -%>
 
 # enable hitless reloads
 trap reload_daemon USR2

@@ -39,6 +39,9 @@ consumes:
     optional: true
 
 properties:
+  ha_proxy.use_bpm:
+    description: Enable or disable bpm as an isolation layer for the HAProxy process. Previously bpm was the default which is why this property defaults to true, however, for future features it might be necessary to disable bpm.
+    default: true
   ha_proxy.nbthread:
     description: "Optional number of threads per VM"
     default: 1

@@ -1,8 +1,17 @@
 check process haproxy
+<%- if p("ha_proxy.use_bpm") then -%>
   with pidfile /var/vcap/sys/run/bpm/haproxy/haproxy.pid
   start program "/var/vcap/jobs/bpm/bin/bpm start haproxy"
   stop program "/var/vcap/jobs/bpm/bin/bpm stop haproxy"
   group vcap
+<%- else -%>
+  with pidfile /var/vcap/sys/run/haproxy/pid
+  uid 0
+  gid 0
+  start program /var/vcap/jobs/haproxy/bin/haproxy_wrapper
+  stop program "/bin/sh -c 'kill -s SIGTERM `cat /var/run/process.pid`'"
+  group vcap
+<%- end -%>
 
 <%-
 timeout=20

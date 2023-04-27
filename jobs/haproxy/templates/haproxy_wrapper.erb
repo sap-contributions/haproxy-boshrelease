@@ -103,6 +103,13 @@ trap reload_daemon USR2
   end
 -%>
 
+<%- unless p('ha_proxy.use_bpm') -%>
+# create the jail HAProxy will go to
+# see: https://docs.haproxy.org/2.7/management.html#13
+mkdir /var/vcap/sys/run/haproxy/jail
+chmod 0 /var/vcap/sys/run/haproxy/jail
+<%- end -%>
+
 # Start up
 echo "$(date): Starting HAProxy"
 haproxy -f ${CONFIG} -W -p ${PID_FILE} <%= flags.join(' ') %> <%= cat_pipe %>

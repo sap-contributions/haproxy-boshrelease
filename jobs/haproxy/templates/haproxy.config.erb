@@ -265,6 +265,9 @@ global
   <%- if p("ha_proxy.always_allow_body_http10") %>
     h1-accept-payload-with-any-method
   <%- end %>
+  <%- unless p("ha_proxy.use_bpm") -%>
+    chroot /var/vcap/sys/run/haproxy/jail
+  <%- end -%>
 
 defaults
     log global

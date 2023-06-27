@@ -1,7 +1,6 @@
 #!/bin/bash
-#
 
-set -e
+set -ex
 
 export PATH=$PATH:/var/vcap/packages/haproxy/bin:/var/vcap/packages/ttar/bin
 CONFIG=/var/vcap/jobs/haproxy/config/haproxy.config
@@ -108,6 +107,21 @@ trap reload_daemon USR2
 <%- unless p('ha_proxy.use_bpm') -%>
 # create the jail HAProxy will go to
 # see: https://docs.haproxy.org/2.7/management.html#13
+#  _________________________
+#    ||   ||     ||   ||
+#    ||   ||, , ,||   ||
+#    ||  (||/|/(\||/  ||
+#    ||  ||| _'_`|||  ||
+#    ||   || o o ||   ||
+#    ||  (||  - `||)  ||
+#    ||   ||  =  ||   ||
+#    ||   ||\___/||   ||
+#    ||___||) , (||___||
+#   /||---||-\_/-||---||\
+#  / ||--_||_____||_--|| \
+# (_(||)-| HAPROXY |-(||)_)
+# https://ascii.co.uk/art/jail
+
 mkdir -p /var/vcap/sys/run/haproxy/jail
 chmod 0 /var/vcap/sys/run/haproxy/jail
 <%- end -%>

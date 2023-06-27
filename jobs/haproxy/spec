@@ -12,6 +12,7 @@ templates:
   reload.erb:                   bin/reload
   drain.erb:                    bin/drain
   pre-start.erb:                bin/pre-start
+  ctl.erb:                      bin/ctl
   bpm.yml:                      config/bpm.yml
   haproxy.config.erb:           config/haproxy.config
   certs.ttar.erb:               config/certs.ttar

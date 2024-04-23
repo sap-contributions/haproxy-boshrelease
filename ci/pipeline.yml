@@ -380,6 +380,7 @@ jobs:
         params:
           rebase: true
           repository: pushme/git
+          branch: release
       - put: blobstore
         params:
           file:  "gh/artifacts/haproxy-*.tgz"

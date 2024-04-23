@@ -5,3 +5,6 @@ ci/README.md
 ci/release_notes_template.md
 ci/release_notes.md
 docs
+.final_builds
+releases/haproxy
+manifests/haproxy.yml

@@ -1,4 +1,4 @@
-FROM bosh/docker-cpi:main
+FROM --platform=linux/amd64 bosh/docker-cpi:main
 
 # Install all necessary tools for haproxy testflight and dependency autobump
 ENV DEBIAN_FRONTEND=noninteractive

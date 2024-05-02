@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 
-set -e
+set -ex
 
 SCRIPT_DIR="$(cd "$(dirname "$0")/" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-
-if ! [[ $(git status --porcelain=v1 2>/dev/null | wc -l) -eq 0 ]]; then
-    echo "You have changes in your Git repository. Commit or clean (e.g. git clean -f) before running."
-    echo "The build will fail otherwise."
-    echo "Git Status:"
-    git status
-    exit 1
-fi
+#
+#if ! [[ $(git status --porcelain=v1 2>/dev/null | wc -l) -eq 0 ]]; then
+#    echo "You have changes in your Git repository. Commit or clean (e.g. git clean -f) before running."
+#    echo "The build will fail otherwise."
+#    echo "Git Status:"
+#    git status
+#    exit 1
+#fi
 
 FOCUS="$1"
 
@@ -56,8 +56,9 @@ pushd "$SCRIPT_DIR/../ci" || exit 1
 popd || exit 1
 
 # Run acceptance tests
-if [ -n "$FOCUS" ]; then
-  docker run --privileged -v "$REPO_DIR":/repo -e REPO_ROOT=/repo -e FOCUS="$FOCUS" haproxy-boshrelease-testflight bash -c "cd /repo/ci/scripts && ./acceptance-tests ; sleep infinity"
-else
-  docker run --rm --privileged -v "$REPO_DIR":/repo -e REPO_ROOT=/repo haproxy-boshrelease-testflight bash -c "cd /repo/ci/scripts && ./acceptance-tests"
-fi
+#if [ -n "$FOCUS" ]; then
+#docker network connect director_network festive_aryabhata
+ DOCKER_DEFAULT_PLATFORM=linux/amd64 docker run -it --privileged --network director_network --platform linux/amd64 -v /var/run/docker.sock:/var/run/docker.sock -v "$REPO_DIR":/repo -e REPO_ROOT=/repo -e FOCUS="$FOCUS" haproxy-boshrelease-testflight bash -c "/bin/bash"
+#else
+#  docker run --rm --privileged -v "$REPO_DIR":/repo -e REPO_ROOT=/repo haproxy-boshrelease-testflight bash -c "cd /repo/ci/scripts && ./acceptance-tests"
+#fi

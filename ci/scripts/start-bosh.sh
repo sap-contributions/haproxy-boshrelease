@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -eo pipefail
+set -exo pipefail
 
 function generate_certs() {
   local certs_dir
@@ -128,21 +128,14 @@ function start_docker() {
   [[ ! -d /etc/docker ]] && mkdir /etc/docker
   cat <<EOF > /etc/docker/daemon.json
 {
-  "hosts": ["${DOCKER_HOST}","unix:///var/run/docker.sock"],
-  "tls": true,
-  "tlscert": "${certs_dir}/server-cert.pem",
-  "tlskey": "${certs_dir}/server-key.pem",
-  "tlscacert": "${certs_dir}/ca.pem",
-  "mtu": ${mtu},
   "data-root": "/scratch/docker",
-  "tlsverify": true
 }
 EOF
 
-  trap stop_docker ERR
+#  trap stop_docker ERR
   service docker start
 
-  export DOCKER_TLS_VERIFY=1
+#  export DOCKER_TLS_VERIFY=1
   export DOCKER_CERT_PATH=$1
 
   rc=1
@@ -166,12 +159,12 @@ EOF
 }
 
 function main() {
-  export OUTER_CONTAINER_IP=$(ruby -rsocket -e 'puts Socket.ip_address_list
-                          .reject { |addr| !addr.ip? || addr.ipv4_loopback? || addr.ipv6? }
-                          .map { |addr| addr.ip_address }.first')
+#  export OUTER_CONTAINER_IP=$(ruby -rsocket -e 'puts Socket.ip_address_list
+#                          .reject { |addr| !addr.ip? || addr.ipv4_loopback? || addr.ipv6? }
+#                          .map { |addr| addr.ip_address }.first')
 
-  export DOCKER_HOST="tcp://${OUTER_CONTAINER_IP}:4243"
-
+  export DOCKER_HOST="unix:///var/run/docker.sock"
+  export DOCKER_DEFAULT_PLATFORM=linux/amd64
   local certs_dir
   certs_dir=$(mktemp -d)
   start_docker "${certs_dir}"
@@ -192,14 +185,15 @@ function main() {
       command bosh int bosh.yml \
         -o docker/cpi.yml \
         -o jumpbox-user.yml \
+        -o docker/unix-sock.yml \
         -v director_name=docker \
         -v internal_cidr=10.245.0.0/16 \
         -v internal_gw=10.245.0.1 \
         -v internal_ip="${BOSH_DIRECTOR_IP}" \
         -v docker_host="${DOCKER_HOST}" \
         -v network=director_network \
-        -v docker_tls="{\"ca\": \"$(cat ${certs_dir}/ca_json_safe.pem)\",\"certificate\": \"$(cat ${certs_dir}/client_certificate_json_safe.pem)\",\"private_key\": \"$(cat ${certs_dir}/client_private_key_json_safe.pem)\"}" \
         ${@} > "${local_bosh_dir}/bosh-director.yml"
+#        -v docker_tls="{\"ca\": \"$(cat ${certs_dir}/ca_json_safe.pem)\",\"certificate\": \"$(cat ${certs_dir}/client_certificate_json_safe.pem)\",\"private_key\": \"$(cat ${certs_dir}/client_private_key_json_safe.pem)\"}" \
 
       command bosh create-env "${local_bosh_dir}/bosh-director.yml" \
               --vars-store="${local_bosh_dir}/creds.yml" \

@@ -25,3 +25,5 @@ my*.yml
 vendor
 .vscode/launch.json
 .vscode/settings.json
+.ruby-version
+

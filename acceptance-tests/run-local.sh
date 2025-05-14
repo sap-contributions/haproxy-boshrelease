@@ -4,6 +4,7 @@ set -eu
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 source "${REPO_DIR}/ci/scripts/functions-ci.sh"
 KEEP_RUNNING=""
+FOCUS=""
 
 usage() {
     echo -e "Usage: $0 [-F <ginkgo focus target>] [-k]

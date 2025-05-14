@@ -73,7 +73,7 @@ function bosh_assets() {
 
     echo "----- Uploading os-conf (used for tests only)"
     bosh -n upload-release --sha1 386293038ae3d00813eaa475b4acf63f8da226ef \
-    https://bosh.io/d/github.com/cloudfoundry/os-conf-release?v=22.1.2
+    https://bosh.io/d/github.com/cloudfoundry/os-conf-release?v=23.0.0
 
     export BOSH_PATH=$(command -v bosh)
     export BASE_MANIFEST_PATH="$PWD/manifests/haproxy.yml"

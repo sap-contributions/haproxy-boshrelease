@@ -62,14 +62,14 @@ function bosh_release() {
 }
 
 function bosh_assets() {
-    stemcell_jammy_path="$START_DIR/stemcell/*.tgz"
-    stemcell_bionic_path="$START_DIR/stemcell-bionic/*.tgz"
+    stemcell_noble_path="$START_DIR/stemcell/*.tgz"
+    stemcell_jammy_path="$START_DIR/stemcell-jammy/*.tgz"
+
+    echo "----- Uploading Noble stemcell"
+    bosh -n upload-stemcell $stemcell_noble_path
 
     echo "----- Uploading Jammy stemcell"
     bosh -n upload-stemcell $stemcell_jammy_path
-
-    echo "----- Uploading Bionic stemcell"
-    bosh -n upload-stemcell $stemcell_bionic_path
 
     echo "----- Uploading os-conf (used for tests only)"
     bosh -n upload-release --sha1 386293038ae3d00813eaa475b4acf63f8da226ef \

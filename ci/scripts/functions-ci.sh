@@ -72,7 +72,7 @@ function bosh_assets() {
     bosh -n upload-stemcell $stemcell_jammy_path
 
     echo "----- Uploading os-conf (used for tests only)"
-    bosh -n upload-release --sha1 386293038ae3d00813eaa475b4acf63f8da226ef \
+    bosh -n upload-release --sha1 d20772d8ce6e781ceb13cac7df5950bfa4330ba1 \
     https://bosh.io/d/github.com/cloudfoundry/os-conf-release?v=23.0.0
 
     export BOSH_PATH=$(command -v bosh)

@@ -187,6 +187,7 @@ function main() {
   fi
 
   compilation_ops="$PWD/ci/compilation.yml"
+  cpi_ops="$PWD/ci/cpi.yml"
   pushd "${BOSH_DEPLOYMENT_PATH:-/usr/local/bosh-deployment}" > /dev/null
       export BOSH_DIRECTOR_IP="10.245.0.3"
       export BOSH_ENVIRONMENT="docker-director"
@@ -221,7 +222,7 @@ function main() {
 EOF
       source "${local_bosh_dir}/env"
 
-      bosh -n update-cloud-config docker/cloud-config.yml -v network=director_network -o "${compilation_ops}"
+      bosh -n update-cloud-config docker/cloud-config.yml -v network=director_network -o "${compilation_ops}" -o "${cpi_ops}"
 
   popd > /dev/null
 }

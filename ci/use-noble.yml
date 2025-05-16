@@ -18,3 +18,13 @@
   path: /instance_groups/name=bosh/properties/docker_cpi/start_containers_with_systemd?
   type: replace
   value: true
+- name: nftables-properties-noble
+  path: /instance_groups/name=bosh/jobs/-
+  type: replace
+  value:
+    name: post-deploy-script
+    release: os-conf
+    properties:
+      script: |-
+        #!/bin/bash
+        sed -i '/^socket cgroupv2/ s/^/#/' /etc/nftables/monit.nft

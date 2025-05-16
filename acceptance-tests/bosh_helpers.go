@@ -87,7 +87,6 @@ var opsfileConfigureSSH string = `---
         sed "/^ *GatewayPorts/d" -i /etc/ssh/sshd_config
         echo 'GatewayPorts clientspecified' >> /etc/ssh/sshd_config
         /etc/init.d/ssh restart
-        sed -i '/^socket cgroupv2/ s/^/#/' /etc/nftables/monit.nft
 `
 
 // opsfiles that need to be set for all tests

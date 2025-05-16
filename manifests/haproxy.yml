@@ -6,6 +6,11 @@ addons:
   jobs:
   - name: bpm
     release: bpm
+- name: bosh-dns-systemd
+  include:
+    stemcell:
+      - os: ubuntu-noble
+  jobs:
   - name: bosh-dns
     properties:
       api:

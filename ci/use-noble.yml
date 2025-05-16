@@ -1,6 +1,26 @@
-- name: stemcell
+- name: stemcell-noble
   path: /resource_pools/name=vms/stemcell?
   type: replace
   value:
     sha1: 4369d1df02294bd75342cf0f5c640aba68a3972a
     url: https://storage.googleapis.com/bosh-core-stemcells/0.156/bosh-stemcell-0.156-warden-boshlite-ubuntu-noble.tgz
+- name: bosh-release-noble
+  path: /releases/name=bosh?
+  type: replace
+  value:
+    name: bosh
+    sha1: 5d26077e7a9c1cb8820ffd5ab554ea1eac420f09
+    url: https://bosh.io/d/github.com/cloudfoundry/bosh?v=282.0.4
+    version: 282.0.4
+- name: bmp-release-noble
+  path: /releases/name=bmp?
+  type: replace
+  value:
+    name: bpm
+    sha1: 00223345c70d5629d35008e88c42bf4482bdf766
+    url: https://bosh.io/d/github.com/cloudfoundry/bpm-release?v=1.4.20
+    version: 1.4.20
+- name: docker-cpi-properties-noble
+  path: /instance_groups/name=bosh/properties/docker_cpi/start_containers_with_systemd?
+  type: replace
+  value: true

@@ -93,6 +93,13 @@ var opsfileConfigureSSH string = `---
 var defaultOpsfiles = []string{opsfileChangeName, opsfileChangeVersion, opsfileConfigureSSH}
 var defaultSSHUser string = "ginkgo"
 
+func writeLog(s string) {
+	ginkgoConfig, _ := GinkgoConfiguration()
+	for _, line := range strings.Split(s, "\n") {
+		fmt.Printf("node %d/%d: %s\n", ginkgoConfig.ParallelProcess, ginkgoConfig.ParallelTotal, line)
+	}
+}
+
 func buildManifestVars(baseManifestVars baseManifestVars, customVars map[string]interface{}) map[string]interface{} {
 	vars := map[string]interface{}{
 		"release-version":         config.ReleaseVersion,
@@ -169,6 +176,7 @@ func deployHAProxy(baseManifestVars baseManifestVars, customOpsfiles []string, c
 
 func dumpCmd(cmd *exec.Cmd) {
 	writeLog("---------- Command to run ----------")
+	writeLog(strings.Join(cmd.Env, " "))
 	writeLog(cmd.String())
 	writeLog("------------------------------------")
 }

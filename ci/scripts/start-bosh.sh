@@ -196,6 +196,7 @@ function main() {
 
       command bosh int bosh.yml \
         -o docker/cpi.yml \
+        -o "${cpi_ops}"
         -o jumpbox-user.yml \
         -v director_name=docker \
         -v internal_cidr=10.245.0.0/16 \
@@ -222,7 +223,7 @@ function main() {
 EOF
       source "${local_bosh_dir}/env"
 
-      bosh -n update-cloud-config docker/cloud-config.yml -v network=director_network -o "${compilation_ops}" -o "${cpi_ops}"
+      bosh -n update-cloud-config docker/cloud-config.yml -v network=director_network -o "${compilation_ops}"
 
   popd > /dev/null
 }

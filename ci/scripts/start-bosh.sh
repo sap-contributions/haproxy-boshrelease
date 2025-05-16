@@ -196,7 +196,7 @@ function main() {
 
       command bosh int bosh.yml \
         -o docker/cpi.yml \
-        -o "${cpi_ops}"
+        -o "${cpi_ops}" \
         -o jumpbox-user.yml \
         -v director_name=docker \
         -v internal_cidr=10.245.0.0/16 \

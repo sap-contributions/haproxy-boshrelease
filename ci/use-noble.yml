@@ -3,9 +3,9 @@
   type: replace
   value:
     sha1: 4369d1df02294bd75342cf0f5c640aba68a3972a
-    url: https://storage.googleapis.com/bosh-core-stemcells/0.156/bosh-stemcell-0.156-warden-boshlite-ubuntu-noble.tgz
+    url: https://bosh.io/d/stemcells/bosh-warden-boshlite-ubuntu-noble?v=0.156
 - name: bosh-release-noble
-  path: /releases/name=bosh?
+  path: /releases/name=bosh
   type: replace
   value:
     name: bosh
@@ -13,7 +13,7 @@
     url: https://bosh.io/d/github.com/cloudfoundry/bosh?v=282.0.4
     version: 282.0.4
 - name: bmp-release-noble
-  path: /releases/name=bmp?
+  path: /releases/name=bmp
   type: replace
   value:
     name: bpm

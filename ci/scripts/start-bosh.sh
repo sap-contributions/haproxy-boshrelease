@@ -187,7 +187,6 @@ function main() {
   fi
 
   compilation_ops="$PWD/ci/compilation.yml"
-  cpi_ops="$PWD/ci/cpi.yml"
   pushd "${BOSH_DEPLOYMENT_PATH:-/usr/local/bosh-deployment}" > /dev/null
       export BOSH_DIRECTOR_IP="10.245.0.3"
       export BOSH_ENVIRONMENT="docker-director"
@@ -196,7 +195,7 @@ function main() {
 
       command bosh int bosh.yml \
         -o docker/cpi.yml \
-        -o "${cpi_ops}" \
+        -o ../noble-updates.yml \
         -o jumpbox-user.yml \
         -v director_name=docker \
         -v internal_cidr=10.245.0.0/16 \

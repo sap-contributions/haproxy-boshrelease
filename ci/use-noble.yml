@@ -18,3 +18,12 @@
   path: /instance_groups/name=bosh/properties/docker_cpi/start_containers_with_systemd?
   type: replace
   value: true
+- type: replace
+  path: /instance_groups/name=bosh/jobs/name=pre-start-script?
+  value:
+    name: pre-start-script
+    release: os-conf
+    properties:
+      script: |-
+        #!/bin/bash
+        sed -i '/^socket cgroupv2/ s/^/#/' /etc/nftables/monit.nft

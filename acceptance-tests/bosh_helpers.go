@@ -88,22 +88,9 @@ var opsfileConfigureSSH string = `---
         echo 'GatewayPorts clientspecified' >> /etc/ssh/sshd_config
         /etc/init.d/ssh restart
 `
-var opsfileConfigureNFT string = `---
-
-# Configure NFT sine cgroupv2 not supported in accepted tests setup
-- type: replace
-  path: /instance_groups/name=haproxy/jobs/-
-  value:
-    name: pre-start-script
-    release: os-conf
-    properties:
-      script: |-
-        #!/bin/bash
-        sed -i '/^socket cgroupv2/ s/^/#/' /etc/nftables/monit.nft
-`
 
 // opsfiles that need to be set for all tests
-var defaultOpsfiles = []string{opsfileChangeName, opsfileChangeVersion, opsfileConfigureSSH, opsfileConfigureNFT}
+var defaultOpsfiles = []string{opsfileChangeName, opsfileChangeVersion, opsfileConfigureSSH}
 var defaultSSHUser string = "ginkgo"
 
 func writeLog(s string) {

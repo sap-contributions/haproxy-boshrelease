@@ -26,4 +26,6 @@
     properties:
       script: |-
         #!/bin/bash
-        sed -i '/^socket cgroupv2/ s/^/#/' /etc/nftables/monit.nft
+        if [ -f /etc/nftables/monit.nft ]; then
+          sed -i '/^socket cgroupv2/ s/^/#/' /etc/nftables/monit.nft
+        fi

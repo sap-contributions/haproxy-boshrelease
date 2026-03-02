@@ -827,3 +827,5 @@ properties:
   ha_proxy.connections_rate_limit.block:
     description: Whether or not to block connections. See docs/rate_limiting.md
     default: false
+  ha_proxy.connections_rate_limit.http_error_rate_limit:
+    description: How many HTTP errors (4xx) are allowed in the given time window from one IP address. See docs/rate_limiting.md

@@ -1,0 +1,50 @@
+---
+
+jobs:
+  - name: acceptance-tests-ephemeral-vm
+    public: false
+    serial: true
+    plan:
+    - do:
+      - in_parallel:
+        - { get: git, trigger: false }
+        - get: ubuntu-noble
+      - task: acceptance-tests-ephemeral-vm
+        image: ubuntu-noble
+        config:
+          platform: linux
+          inputs:
+            - { name: git }
+          run:
+            path: ./git/ci/scripts/ephemeral-vm/acceptance-tests-bootstrap
+            args: []
+          params:
+            REPO_ROOT: git
+            TF_DIR: git/ci/terraform/ephemeral-vm
+            TF_VAR_cloud_project: ((gcp.project_id))
+            TF_VAR_cloud_credentials_json: ((gcp.service_key))
+            TF_VAR_cloud_region: ((cloud.region))
+            TF_VAR_cloud_zone: ((cloud.zone))
+            SSH_MAX_ATTEMPTS: 100
+            SSH_POLL_INTERVAL_SECONDS: 5
+
+resources:
+  - name: git
+    type: git
+    source:
+      uri:         git@github.com:cloudfoundry/haproxy-boshrelease.git
+      branch:      master
+      private_key: ((github.bot_deploy_key_private))
+
+  - name: ubuntu-noble
+    type: registry-image
+    source:
+      repository: ubuntu
+      tag: "24.04"
+
+resource_types:
+  - name: slack-notification
+    type: docker-image
+    source:
+      repository: cfcommunity/slack-notification-resource
+

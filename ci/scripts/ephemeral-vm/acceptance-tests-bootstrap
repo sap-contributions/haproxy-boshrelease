@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# Runs on the Concourse worker container.
+# Installs only the tools needed to run Terraform and SSH into the ephemeral VM.
+# All VM-side package installation is handled by ci/scripts/ephemeral-vm/vm-bootstrap
+# which is uploaded and executed on the VM over SSH by the acceptance-tests script.
+set -euo pipefail
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+apt-get install -y --no-install-recommends \
+  curl vim unzip ca-certificates openssh-client
+rm -rf /var/lib/apt/lists/*
+
+# install Terraform
+arch="$(dpkg --print-architecture)"
+case "$arch" in
+  amd64) tf_arch="amd64" ;;
+  arm64) tf_arch="arm64" ;;
+  *) echo "Unsupported architecture: $arch"; exit 1 ;;
+esac
+
+tf_version="${TF_VERSION:-1.9.8}"
+curl -fsSL "https://releases.hashicorp.com/terraform/${tf_version}/terraform_${tf_version}_linux_${tf_arch}.zip" \
+  -o /tmp/terraform.zip
+unzip -o /tmp/terraform.zip -d /usr/local/bin
+chmod +x /usr/local/bin/terraform
+terraform version
+
+exec ./git/ci/scripts/ephemeral-vm/acceptance-tests
+

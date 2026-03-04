@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# This script runs ON the ephemeral VM (uploaded and executed via SSH).
+# It installs all packages and tools required to run the acceptance tests.
+set -euo pipefail
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+apt-get install -y --no-install-recommends \
+  git curl vim unzip ca-certificates \
+  apt-transport-https software-properties-common gnupg lsb-release
+rm -rf /var/lib/apt/lists/*
+
+# install Docker CE
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+  | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] \
+https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
+  | tee /etc/apt/sources.list.d/docker.list > /dev/null
+apt-get update
+apt-get install -y --no-install-recommends docker-ce docker-ce-cli containerd.io
+rm -rf /var/lib/apt/lists/*
+
+systemctl enable docker
+systemctl start docker
+
+echo "[vm-bootstrap] VM is ready"
+

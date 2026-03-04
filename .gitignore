@@ -25,3 +25,4 @@ my*.yml
 vendor
 .vscode/launch.json
 .vscode/settings.json
+ci/vars-ephemeral-vm.yml

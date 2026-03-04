@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO_ROOT=${REPO_ROOT:-git}
+TF_DIR=${TF_DIR:-${REPO_ROOT}/ci/terraform/ephemeral-vm}
+SSH_POLL_INTERVAL_SECONDS=${SSH_POLL_INTERVAL_SECONDS:-5}
+SSH_MAX_ATTEMPTS=${SSH_MAX_ATTEMPTS:-100}
+SSH_OPTS='-o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10'
+
+mkdir -p "${TF_DIR}" && cd "${TF_DIR}"
+
+echo "[ephemeral-vm] Terraform init in ${TF_DIR}"
+terraform init -input=false
+
+echo "[ephemeral-vm] Terraform apply"
+terraform apply -auto-approve -input=false
+
+cleanup() {
+  echo "[ephemeral-vm] Terraform destroy"
+  terraform destroy -auto-approve -input=false || echo "terraform destroy failed"
+}
+trap cleanup EXIT
+
+VM_IP=$(terraform output -raw vm_ip)
+SSH_USER=$(terraform output -raw ssh_user)
+SSH_PRIVATE_KEY=$(terraform output -raw ssh_private_key) # or terraform output -raw ssh_private_key_path
+
+echo "[ephemeral-vm] Writing SSH key material"
+KEY_FILE=$(mktemp)
+chmod 600 "${KEY_FILE}"
+printf '%s\n' "${SSH_PRIVATE_KEY}" > "${KEY_FILE}"
+
+echo "[ephemeral-vm] Waiting for SSH on ${SSH_USER}@${VM_IP}"
+START_TS=$(date +%s)
+SSH_MAX_ATTEMPTS=${SSH_MAX_ATTEMPTS:-100}
+ssh_attempt=0
+while true; do
+  ssh_attempt=$((ssh_attempt + 1))
+  if ssh ${SSH_OPTS} -i "${KEY_FILE}" "${SSH_USER}@${VM_IP}" 'echo ssh-ready' >/dev/null 2>&1; then
+    break
+  fi
+
+  if [ "${ssh_attempt}" -ge "${SSH_MAX_ATTEMPTS}" ]; then
+    echo "[ephemeral-vm] Timed out waiting for SSH after ${SSH_MAX_ATTEMPTS} attempts"
+    exit 1
+  fi
+
+  NOW_TS=$(date +%s)
+  ELAPSED=$((NOW_TS - START_TS))
+  echo "[ephemeral-vm] SSH not ready yet (attempt ${ssh_attempt}/${SSH_MAX_ATTEMPTS}, ${ELAPSED}s elapsed); retrying in ${SSH_POLL_INTERVAL_SECONDS}s"
+  sleep "${SSH_POLL_INTERVAL_SECONDS}"
+done
+
+echo "[ephemeral-vm] Running vm-bootstrap on remote VM (installing packages and tools)"
+ssh ${SSH_OPTS} -i "${KEY_FILE}" "${SSH_USER}@${VM_IP}" \
+  "sudo bash ~/haproxy-boshrelease/ci/scripts/ephemeral-vm/vm-bootstrap"
+
+echo "[ephemeral-vm] Uploading repository to remote VM"
+TAR_FILE=$(mktemp)
+trap 'rm -f "${KEY_FILE}" "${TAR_FILE}"; cleanup' EXIT
+
+tar -C "${REPO_ROOT}" -czf "${TAR_FILE}" .
+ssh ${SSH_OPTS} -i "${KEY_FILE}" "${SSH_USER}@${VM_IP}" 'mkdir -p ~/haproxy-boshrelease'
+cat "${TAR_FILE}" | ssh ${SSH_OPTS} -i "${KEY_FILE}" "${SSH_USER}@${VM_IP}" 'tar -xzf - -C ~/haproxy-boshrelease'
+
+echo "[ephemeral-vm] Running acceptance tests remotely (streaming logs)"
+ssh ${SSH_OPTS} -i "${KEY_FILE}" "${SSH_USER}@${VM_IP}" "bash -lc 'cd ~/haproxy-boshrelease/ci/scripts && ./acceptance-tests'" || rc=$?
+
+echo "[ephemeral-vm] Acceptance tests completed"
+
+[ -n "${rc:-}" ] && exit $rc || exit 0

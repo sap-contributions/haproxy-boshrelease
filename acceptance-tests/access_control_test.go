@@ -11,10 +11,10 @@ import (
 )
 
 /*
-	Test strategy:
-		* Use an SSH tunnel to make requests to HAProxy that appear to come from 127.0.0.1
-		* Requests directly from test runner on Concourse appear to come from 10.0.0.0/8
-		We can test whitelisting and blacklisting by using these CIDRs
+Test strategy:
+  - Use an SSH tunnel to make requests to HAProxy that appear to come from 127.0.0.1
+  - Requests directly from test runner on Concourse appear to come from 10.0.0.0/8
+    We can test whitelisting and blacklisting by using these CIDRs
 */
 var _ = Describe("Access Control", func() {
 	opsfileWhitelist := `---
@@ -31,6 +31,12 @@ var _ = Describe("Access Control", func() {
 - type: replace
   path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/cidr_blacklist?
   value: ((cidr_blacklist))
+`
+	opsfileTCPBlacklist := `---
+# Enable TCP-layer CIDR blacklist
+- type: replace
+  path: /instance_groups/name=haproxy/jobs/name=haproxy/properties/ha_proxy/tcp_blacklist_cidrs?
+  value: ((tcp_blacklist_cidrs))
 `
 
 	It("Allows IPs in whitelisted CIDRS", func() {
@@ -95,6 +101,38 @@ var _ = Describe("Access Control", func() {
 		Expect(errors.Is(err, io.EOF)).To(BeTrue())
 
 		By("Allowing access to non-blacklisted CIDRs (request from 127.0.0.1 on HAProxy VM)")
+		expectTestServer200(http.Get("http://127.0.0.1:11000"))
+	})
+
+	It("Rejects IPs in TCP-layer blocklisted CIDRs", func() {
+		haproxyBackendPort := 12000
+
+		haproxyInfo, _ := deployHAProxy(baseManifestVars{
+			haproxyBackendPort:    haproxyBackendPort,
+			haproxyBackendServers: []string{"127.0.0.1"},
+			deploymentName:        deploymentNameForTestNode(),
+		}, []string{opsfileTCPBlacklist}, map[string]interface{}{
+			// traffic from test runner appears to come from this CIDR block
+			"tcp_blacklist_cidrs": []string{"10.0.0.0/8"},
+		}, true)
+
+		closeLocalServer, localPort := startDefaultTestServer()
+		defer closeLocalServer()
+
+		closeBackendTunnel := setupTunnelFromHaproxyToTestServer(haproxyInfo, haproxyBackendPort, localPort)
+		defer closeBackendTunnel()
+
+		// Set up a tunnel so that requests to localhost:11000 appear to come from 127.0.0.1
+		// on the HAProxy VM, which is NOT in the TCP blocklist
+		closeFrontendTunnel := setupTunnelFromLocalMachineToHAProxy(haproxyInfo, 11000, 80)
+		defer closeFrontendTunnel()
+
+		By("Denying TCP connections from blocklisted CIDRs (request from test runner)")
+		_, err := http.Get(fmt.Sprintf("http://%s", haproxyInfo.PublicIP))
+		Expect(err).To(HaveOccurred())
+		Expect(errors.Is(err, io.EOF)).To(BeTrue())
+
+		By("Allowing TCP connections from non-blocklisted CIDRs (request from 127.0.0.1 on HAProxy VM)")
 		expectTestServer200(http.Get("http://127.0.0.1:11000"))
 	})
 })

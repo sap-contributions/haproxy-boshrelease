@@ -2,21 +2,21 @@
 
 require 'rspec'
 
-describe 'config/blocklist_cidrs_tcp.txt' do
-  let(:template) { haproxy_job.template('config/blocklist_cidrs_tcp.txt') }
+describe 'config/tcp_blacklist_cidrs.txt' do
+  let(:template) { haproxy_job.template('config/tcp_blacklist_cidrs.txt') }
 
-  context 'when ha_proxy.cidr_blocklist_tcp is provided' do
+  context 'when ha_proxy.tcp_blacklist_cidrs is provided' do
     context 'when an array of cidrs is provided' do
       it 'has the correct contents' do
         expect(template.render({
           'ha_proxy' => {
-            'cidr_blocklist_tcp' => [
+            'tcp_blacklist_cidrs' => [
               '10.0.0.0/8',
               '192.168.2.0/24'
             ]
           }
         })).to eq(<<~EXPECTED)
-          # generated from blocklist_cidrs_tcp.txt.erb
+          # generated from tcp_blacklist_cidrs.txt.erb
 
           # This list contains CIDRs that are blocked immediately after TCP connection setup.
           10.0.0.0/8
@@ -30,13 +30,13 @@ describe 'config/blocklist_cidrs_tcp.txt' do
       it 'has the correct contents' do
         expect(template.render({
           'ha_proxy' => {
-            'cidr_blocklist_tcp' => gzip_and_b64_encode(<<~INPUT)
+            'tcp_blacklist_cidrs' => gzip_and_b64_encode(<<~INPUT)
               10.0.0.0/8
               192.168.2.0/24
             INPUT
           }
         })).to eq(<<~EXPECTED)
-          # generated from blocklist_cidrs_tcp.txt.erb
+          # generated from tcp_blacklist_cidrs.txt.erb
 
           # This list contains CIDRs that are blocked immediately after TCP connection setup.
           10.0.0.0/8
@@ -47,10 +47,10 @@ describe 'config/blocklist_cidrs_tcp.txt' do
     end
   end
 
-  context 'when ha_proxy.cidr_blocklist_tcp is not provided' do
+  context 'when ha_proxy.tcp_blacklist_cidrs is not provided' do
     it 'contains only the default comment' do
       expect(template.render({})).to eq(<<~EXPECTED)
-        # generated from blocklist_cidrs_tcp.txt.erb
+        # generated from tcp_blacklist_cidrs.txt.erb
 
         # This list contains CIDRs that are blocked immediately after TCP connection setup.
 
@@ -58,14 +58,14 @@ describe 'config/blocklist_cidrs_tcp.txt' do
     end
   end
 
-  context 'when ha_proxy.cidr_blocklist_tcp is an empty array' do
+  context 'when ha_proxy.tcp_blacklist_cidrs is an empty array' do
     it 'contains only the default comment' do
       expect(template.render({
         'ha_proxy' => {
-          'cidr_blocklist_tcp' => []
+          'tcp_blacklist_cidrs' => []
         }
       })).to eq(<<~EXPECTED)
-        # generated from blocklist_cidrs_tcp.txt.erb
+        # generated from tcp_blacklist_cidrs.txt.erb
 
         # This list contains CIDRs that are blocked immediately after TCP connection setup.
 

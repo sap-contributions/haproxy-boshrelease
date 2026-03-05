@@ -1,10 +1,10 @@
-# generated from blocklist_cidrs_tcp.txt.erb
+# generated from tcp_blacklist_cidrs.txt.erb
 <%
 require "base64"
 require 'zlib'
 require 'stringio'
 
-cidrs = p("ha_proxy.cidr_blocklist_tcp", [])
+cidrs = p("ha_proxy.tcp_blacklist_cidrs", [])
 uncompressed = ''
 if cidrs.is_a?(Array) && cidrs.any?
   cidrs.each do |cidr|

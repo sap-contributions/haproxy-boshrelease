@@ -453,7 +453,7 @@ resources:
   - name: docker-cpi-image
     type: docker-image
     source:
-      repository: bosh/docker-cpi
+      repository: ghcr.io/cloudfoundry/bosh/docker-cpi
 
   - name: git-ci
     type: git

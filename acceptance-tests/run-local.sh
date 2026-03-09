@@ -34,6 +34,20 @@ while getopts ":F:P:k" o; do
 done
 shift $((OPTIND-1))
 
+docker_mac_check_cgroupsv1() {
+    # Force cgroups v1 on Docker for Mac
+    # inspired by https://github.com/docker/for-mac/issues/6073#issuecomment-1018793677
+
+    SETTINGS=~/Library/Group\ Containers/group.com.docker/settings.json
+
+    cgroupsV1Enabled=$(jq '.deprecatedCgroupv1' "$SETTINGS")
+    if [ "$cgroupsV1Enabled" != "true" ]; then
+        echo "deprecatedCgroupv1 should be enabled in $SETTINGS. Otherwise the acceptance tests will not run on Docker for Mac."
+        echo "Check in the README.md for a convenient script to set deprecatedCgroupv1 and restart Docker."
+        exit 1
+    fi
+}
+
 check_required_files() {
   PIDS=""
   REQUIRED_FILE_PATTERNS=(
@@ -73,6 +87,10 @@ check_required_files() {
 }
 
 check_required_files
+
+if [ "$(uname)" == "Darwin" ]; then
+    docker_mac_check_cgroupsv1
+fi
 
 build_image "${REPO_DIR}/ci"
 prepare_docker_scratch

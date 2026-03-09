@@ -7,6 +7,7 @@ RUN apt-get update && \
     apt-get clean
 
 # Set bosh env at login
+RUN echo "source /tmp/local-bosh/director/docker-env" >> /root/.bashrc
 RUN echo "source /tmp/local-bosh/director/env" >> /root/.bashrc
 
 # Copy ops files

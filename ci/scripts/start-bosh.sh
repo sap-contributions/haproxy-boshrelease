@@ -66,7 +66,7 @@ function sanitize_cgroups() {
   mount -o remount,rw /sys/fs/cgroup
 
   # shellcheck disable=SC2034
-  sed -e 1d /proc/cgroups | while read -r sys hierarchy num enabled; do
+  sed -e 1d /proc/cgroups | while read -r sys enabled; do
     if [ "$enabled" != "1" ]; then
       # subsystem disabled; skip
       continue

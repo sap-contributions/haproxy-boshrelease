@@ -48,6 +48,16 @@ else
 fi
 echo "------------------------------------------------------------------"
 
-ginkgo -v "$PARALLELISM" -r --trace --show-node-events --randomize-all --flake-attempts 5 "${ADDITIONAL_ARGS[@]}"
+echo "------------------------------------------------------------------"
+if [ "${VERBOSITY:-}" = "vv" ]; then
+  VERBOSITY_FLAG="-vv"
+  echo "VERBOSITY is set to 'vv'. Will run ginkgo with '$VERBOSITY_FLAG'"
+else
+  VERBOSITY_FLAG="-v"
+  echo "VERBOSITY is not set or unrecognised. Using default '$VERBOSITY_FLAG'"
+fi
+echo "------------------------------------------------------------------"
+
+ginkgo "$VERBOSITY_FLAG" "$PARALLELISM" -r --trace --show-node-events --randomize-all --flake-attempts 5 "${ADDITIONAL_ARGS[@]}"
 
 keep_running_info

@@ -11,7 +11,6 @@ RUN echo "source /tmp/local-bosh/director/docker-env" >> /root/.bashrc
 RUN echo "source /tmp/local-bosh/director/env" >> /root/.bashrc
 
 # Copy ops files
-COPY ops/noble-support.yml /usr/local/bosh-deployment/noble-support.yml
 COPY ops/bosh-scaled-out.yml /usr/local/bosh-deployment/bosh-scaled-out.yml
 
 # Install Python libraries needed for scripts

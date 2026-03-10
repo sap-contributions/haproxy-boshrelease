@@ -68,7 +68,7 @@ var _ = Describe("HTTP Health Check", func() {
 		//closeLocalServer, backendLocalPort := startDefaultTestServer()
 		// defer closeLocalServer()
 
-		_ := setupTunnelFromHaproxyToTestServer(backendHaproxyInfo, haproxyBackendPort, backendLocalPort)
+		setupTunnelFromHaproxyToTestServer(backendHaproxyInfo, haproxyBackendPort, backendLocalPort)
 		//closeTunnel := setupTunnelFromHaproxyToTestServer(backendHaproxyInfo, haproxyBackendPort, backendLocalPort)
 		// defer closeTunnel()
 

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os/exec"
-	"regexp"
 	"strings"
 	"time"
 
@@ -153,14 +152,10 @@ func deployHAProxy(baseManifestVars baseManifestVars, customOpsfiles []string, c
 	session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 	Expect(err).NotTo(HaveOccurred())
 
-	Eventually(session, 20*time.Minute, time.Second).Should(gexec.Exit())
-
 	if expectSuccess {
-		if session.ExitCode() != 0 {
-			dumpBoshTaskDebug(session)
-			Fail(fmt.Sprintf("bosh deploy exited with code %d", session.ExitCode()))
-		}
+		Eventually(session, 20*time.Minute, time.Second).Should(gexec.Exit(0))
 	} else {
+		Eventually(session, 20*time.Minute, time.Second).Should(gexec.Exit())
 		Expect(session.ExitCode()).NotTo(BeZero())
 	}
 
@@ -176,28 +171,6 @@ func dumpCmd(cmd *exec.Cmd) {
 	writeLog("---------- Command to run ----------")
 	writeLog(cmd.String())
 	writeLog("------------------------------------")
-}
-
-// dumpBoshTaskDebug extracts the BOSH task number from session output and runs
-// "bosh tasks <number> --debug" to stream the full debug log into GinkgoWriter.
-func dumpBoshTaskDebug(session *gexec.Session) {
-	combined := string(session.Out.Contents()) + string(session.Err.Contents())
-	// Lines like: "Task 67 | 19:24:12 | ..."
-	re := regexp.MustCompile(`(?m)^\s*Task (\d+) \|`)
-	matches := re.FindStringSubmatch(combined)
-	if len(matches) < 2 {
-		writeLog("(could not extract BOSH task number from output for debug dump)")
-		return
-	}
-	taskNumber := matches[1]
-	By(fmt.Sprintf("Dumping BOSH task %s debug log", taskNumber))
-	cmd := config.boshCmd("", "task", taskNumber, "--debug")
-	debugSession, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-	if err != nil {
-		writeLog(fmt.Sprintf("Failed to start bosh task debug: %s", err))
-		return
-	}
-	Eventually(debugSession, 2*time.Minute, time.Second).Should(gexec.Exit())
 }
 
 func dumpHAProxyConfig(haproxyInfo haproxyInfo) {

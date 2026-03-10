@@ -1,6 +1,9 @@
 - type: replace
   path: /update?/canary_watch_time?
-  value: 60000-1200000
+  value: 60000-600000
 - type: replace
   path: /update?/update_watch_time?
-  value: 60000-1200000
+  value: 60000-600000
+- type: replace
+  path: /instance_groups/name=bosh/properties/director/db/connection_options?/pool_timeout?
+  value: 60

@@ -267,6 +267,7 @@ EOF
       export BOSH_CLIENT=admin
       export BOSH_CLIENT_SECRET=${bosh_client_secret}
       export BOSH_CA_CERT="${local_bosh_dir}/ca.crt"
+      export BOSH_LOG_LEVEL=debug
 EOF
       echo "Source '${local_bosh_dir}/env' to run bosh" >&2
       source "${local_bosh_dir}/env"

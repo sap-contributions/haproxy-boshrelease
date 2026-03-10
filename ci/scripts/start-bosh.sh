@@ -239,12 +239,15 @@ EOF
 }
 EOF
 
+      local ops_files_dir="$PWD/haproxy-boshrelease"
+
       echo "Interpolating BOSH deployment manifest with Docker CPI and TLS configuration..." >&2
       bosh int bosh.yml \
         -o docker/cpi.yml \
         -o jumpbox-user.yml \
         -o /usr/local/local-releases.yml \
-        -o "$PWD/bosh-scaled-out.yml" \
+        -o "$ops_files_dir/bosh-dns.yml" \
+        -o "$ops_files_dir/bosh-scaled-out.yml" \
         -v director_name=docker \
         -v internal_cidr=${docker_network_cidr} \
         -v internal_gw=10.245.0.1 \
@@ -277,7 +280,10 @@ EOF
       source "${local_bosh_dir}/env"
 
       echo "Updating BOSH cloud config with Docker network..." >&2
-      bosh -n update-cloud-config docker/cloud-config.yml -v network="${docker_network_name}"
+      bosh -n update-cloud-config \
+        docker/cloud-config.yml \
+        -o "$ops_files_dir/compilation.yml" \
+        -v network="${docker_network_name}"
 
   popd > /dev/null
 }

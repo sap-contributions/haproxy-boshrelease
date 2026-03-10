@@ -246,7 +246,6 @@ EOF
         -o docker/cpi.yml \
         -o jumpbox-user.yml \
         -o /usr/local/local-releases.yml \
-        -o "$ops_files_dir/bosh-dns.yml" \
         -o "$ops_files_dir/bosh-scaled-out.yml" \
         -o "$ops_files_dir/bosh-watch-time.yml" \
         -v director_name=docker \

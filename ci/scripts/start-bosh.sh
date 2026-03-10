@@ -105,11 +105,14 @@ function start_docker() {
   local certs_dir
   certs_dir="${1}"
 
-  export DNS_IP="8.8.8.8"
+  # Raise inotify limits so nested containers running systemd don't exhaust
+  # file descriptors. Systemd and containerd's cgroup-v2 event monitor both
+  # use inotify; the default max_user_instances (128) was too low.
+  sysctl -w fs.inotify.max_user_instances=1024
+  sysctl -w fs.inotify.max_user_watches=524288
+  sysctl -w net.ipv4.ip_forward=1
 
-  # docker will fail starting with the new iptables. it throws:
-  # iptables v1.8.7 (nf_tables): Could not fetch rule set generation id: ....
-  update-alternatives --set iptables /usr/sbin/iptables-legacy
+  export DNS_IP="8.8.8.8"
 
   generate_certs "${certs_dir}"
 
@@ -147,8 +150,10 @@ function start_docker() {
   "tlskey": "${certs_dir}/server-key.pem",
   "tlscacert": "${certs_dir}/ca.pem",
   "mtu": ${mtu},
+  "dns": ["8.8.8.8", "8.8.4.4"],
   "data-root": "/scratch/docker",
-  "tlsverify": true
+  "tlsverify": true,
+  "ip-forward-no-drop": true
 }
 EOF
 

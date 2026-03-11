@@ -1,14 +1,6 @@
-# When the Concourse worker host uses cgroups v2 (unified hierarchy),
-# Docker containers started by the Docker CPI default to a private cgroup
-# namespace. BPM's runc then tries to create scopes under
-# /sys/fs/cgroup/systemd/ (a cgroups v1 path) which does not exist in
-# the container, causing:
-#   openat2 /sys/fs/cgroup/systemd/.../cgroup.procs: no such file or directory
-#
-# Setting cgroupns_mode to "host" makes the BOSH director container share
-# the host cgroup namespace so that /sys/fs/cgroup/systemd/ is visible
-# and BPM/runc can write to it.
 - type: replace
   path: /instance_groups/name=bosh/properties/docker_cpi/container?/cgroupns_mode?
   value: host
-
+- type: replace
+  path: /instance_groups/name=bosh/properties/docker_cpi/container?/privileged?
+  value: true

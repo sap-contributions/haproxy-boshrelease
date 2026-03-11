@@ -12,6 +12,7 @@ RUN echo "source /tmp/local-bosh/director/env" >> /root/.bashrc
 
 # Copy ops files
 RUN mkdir -p /usr/local/bosh-deployment/haproxy-boshrelease
+COPY ops/bosh-cgroup.yml /usr/local/bosh-deployment/haproxy-boshrelease/bosh-cgroup.yml
 COPY ops/bosh-dns.yml /usr/local/bosh-deployment/haproxy-boshrelease/bosh-dns.yml
 COPY ops/bosh-scaled-out.yml /usr/local/bosh-deployment/haproxy-boshrelease/bosh-scaled-out.yml
 COPY ops/bosh-watch-time.yml /usr/local/bosh-deployment/haproxy-boshrelease/bosh-watch-time.yml

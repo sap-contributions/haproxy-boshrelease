@@ -153,7 +153,8 @@ function start_docker() {
   "dns": ["8.8.8.8", "8.8.4.4"],
   "data-root": "/scratch/docker",
   "tlsverify": true,
-  "ip-forward-no-drop": true
+  "ip-forward-no-drop": true,
+  "exec-opts": ["native.cgroupdriver=cgroupfs"]
 }
 EOF
 

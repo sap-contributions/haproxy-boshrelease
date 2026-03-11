@@ -246,6 +246,7 @@ EOF
         -o docker/cpi.yml \
         -o jumpbox-user.yml \
         -o /usr/local/local-releases.yml \
+        -o "$ops_files_dir/bosh-cgroup.yml" \
         -o "$ops_files_dir/bosh-scaled-out.yml" \
         -v director_name=docker \
         -v internal_cidr=${docker_network_cidr} \
@@ -282,6 +283,7 @@ EOF
       bosh -n update-cloud-config \
         docker/cloud-config.yml \
         -o "$ops_files_dir/compilation.yml" \
+        -o "$ops_files_dir/cloud-config-cgroup.yml" \
         -v network="${docker_network_name}"
 
   popd > /dev/null

@@ -1,0 +1,7 @@
+- type: replace
+  path: /vm_types/name=default/cloud_properties/privileged?
+  value: true
+- type: replace
+  path: /vm_types/name=default/cloud_properties/cgroupns_mode?
+  value: host
+

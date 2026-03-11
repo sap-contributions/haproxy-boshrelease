@@ -61,6 +61,15 @@ else
 fi
 echo "------------------------------------------------------------------"
 
-ginkgo "$VERBOSITY_FLAG" "$PARALLELISM" -r --trace --show-node-events --randomize-all --flake-attempts 5 "${ADDITIONAL_ARGS[@]}"
+echo "------------------------------------------------------------------"
+if [ -n "${FLAKE_ATTEMPTS:-}" ]; then
+  echo "FLAKE_ATTEMPTS is set. Will run ginkgo with '--flake-attempts=$FLAKE_ATTEMPTS'"
+else
+  FLAKE_ATTEMPTS=5
+  echo "FLAKE_ATTEMPTS is not set. Using default '$FLAKE_ATTEMPTS'"
+fi
+echo "------------------------------------------------------------------"
+
+ginkgo "$VERBOSITY_FLAG" "$PARALLELISM" -r --trace --show-node-events --randomize-all --flake-attempts "$FLAKE_ATTEMPTS" "${ADDITIONAL_ARGS[@]}"
 
 keep_running_info

@@ -4,9 +4,6 @@ set -e
 source "${REPO_ROOT}/ci/scripts/functions-ci.sh"
 START_DIR="${PWD}"  # Differs for CI and manual execution
 
-
-FOCUS="Correctly starts if there is a healthy backend"
-
 if [ -n "$FOCUS" ]; then
   echo "------------------------------------------------------------------"
   echo "FOCUS is set. Will only run tests matching '$FOCUS'"

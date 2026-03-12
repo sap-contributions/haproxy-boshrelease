@@ -259,9 +259,30 @@ EOF
         "${@}" > "${local_bosh_dir}/bosh-director.yml"
 
       echo "Creating BOSH director environment..." >&2
-      bosh create-env "${local_bosh_dir}/bosh-director.yml" \
-        --vars-store="${local_bosh_dir}/creds.yml" \
-        --state="${local_bosh_dir}/state.json"
+      local create_env_rc=1
+      local max_attempts=${FLAKE_ATTEMPTS:-5}
+      local attempt_interval=30
+      for attempt in $(seq 1 $max_attempts); do
+        echo "bosh create-env attempt ${attempt}/${max_attempts}..." >&2
+        bosh create-env "${local_bosh_dir}/bosh-director.yml" \
+          --vars-store="${local_bosh_dir}/creds.yml" \
+          --state="${local_bosh_dir}/state.json"
+
+        create_env_rc=$?
+        if [ "${create_env_rc}" -eq "0" ]; then
+          echo "bosh create-env succeeded on attempt ${attempt}" >&2
+          break
+        fi
+        echo "bosh create-env failed on attempt ${attempt} (exit code ${create_env_rc})" >&2
+        if [ "${attempt}" -lt "${max_attempts}" ]; then
+          echo "Retrying in ${attempt_interval} seconds..." >&2
+          sleep ${attempt_interval}
+        fi
+      done
+      if [ "${create_env_rc}" -ne "0" ]; then
+        echo "bosh create-env failed after ${max_attempts} attempts. Exiting." >&2
+        exit 1
+      fi
 
       echo "Extracting BOSH director credentials and CA certificate..." >&2
       bosh int "${local_bosh_dir}/creds.yml" --path /director_ssl/ca > "${local_bosh_dir}/ca.crt"

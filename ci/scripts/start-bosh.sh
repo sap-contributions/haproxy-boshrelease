@@ -263,7 +263,7 @@ EOF
       local attempt_interval=30
       for attempt in $(seq 1 $max_attempts); do
         echo "bosh create-env attempt ${attempt}/${max_attempts}..." >&2
-        set +e.  # disables abort-on-error
+        set +e  # disables abort-on-error
         bosh create-env "${local_bosh_dir}/bosh-director.yml" \
           --vars-store="${local_bosh_dir}/creds.yml" \
           --state="${local_bosh_dir}/state.json"

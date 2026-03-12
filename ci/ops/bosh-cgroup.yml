@@ -1,6 +1,0 @@
-- type: replace
-  path: /instance_groups/name=bosh/properties/docker_cpi/container?/cgroupns_mode?
-  value: host
-- type: replace
-  path: /instance_groups/name=bosh/properties/docker_cpi/container?/privileged?
-  value: true

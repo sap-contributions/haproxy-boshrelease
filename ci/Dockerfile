@@ -12,9 +12,7 @@ RUN echo "source /tmp/local-bosh/director/env" >> /root/.bashrc
 
 # Copy ops files
 RUN mkdir -p /usr/local/bosh-deployment/haproxy-boshrelease
-COPY ops/bosh-cgroup.yml /usr/local/bosh-deployment/haproxy-boshrelease/bosh-cgroup.yml
 COPY ops/bosh-scaled-out.yml /usr/local/bosh-deployment/haproxy-boshrelease/bosh-scaled-out.yml
-COPY ops/cloud-config-cgroup.yml /usr/local/bosh-deployment/haproxy-boshrelease/cloud-config-cgroup.yml
 COPY ops/compilation.yml /usr/local/bosh-deployment/haproxy-boshrelease/compilation.yml
 
 # Install Python libraries needed for scripts

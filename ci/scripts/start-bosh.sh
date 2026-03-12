@@ -247,7 +247,6 @@ EOF
         -o docker/cpi.yml \
         -o jumpbox-user.yml \
         -o /usr/local/local-releases.yml \
-        -o "$ops_files_dir/bosh-cgroup.yml" \
         -o "$ops_files_dir/bosh-scaled-out.yml" \
         -v director_name=docker \
         -v internal_cidr=${docker_network_cidr} \
@@ -264,11 +263,13 @@ EOF
       local attempt_interval=30
       for attempt in $(seq 1 $max_attempts); do
         echo "bosh create-env attempt ${attempt}/${max_attempts}..." >&2
+        set +e.  # disables abort-on-error
         bosh create-env "${local_bosh_dir}/bosh-director.yml" \
           --vars-store="${local_bosh_dir}/creds.yml" \
           --state="${local_bosh_dir}/state.json"
-
         create_env_rc=$?
+        set -e
+
         if [ "${create_env_rc}" -eq "0" ]; then
           echo "bosh create-env succeeded on attempt ${attempt}" >&2
           break
@@ -305,7 +306,6 @@ EOF
       bosh -n update-cloud-config \
         docker/cloud-config.yml \
         -o "$ops_files_dir/compilation.yml" \
-        -o "$ops_files_dir/cloud-config-cgroup.yml" \
         -v network="${docker_network_name}"
 
   popd > /dev/null

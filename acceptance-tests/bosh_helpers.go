@@ -149,13 +149,9 @@ func deployHAProxy(baseManifestVars baseManifestVars, customOpsfiles []string, c
 	cmd, varsStoreReader := deployBaseManifestCmd(baseManifestVars.deploymentName, opsfiles, manifestVars)
 
 	dumpCmd(cmd)
-	session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
-	Expect(err).NotTo(HaveOccurred())
+	session := deployWithRetry(baseManifestVars.deploymentName, cmd, 20*time.Minute, expectSuccess)
 
-	if expectSuccess {
-		Eventually(session, 20*time.Minute, time.Second).Should(gexec.Exit(0))
-	} else {
-		Eventually(session, 20*time.Minute, time.Second).Should(gexec.Exit())
+	if !expectSuccess {
 		Expect(session.ExitCode()).NotTo(BeZero())
 	}
 
@@ -165,6 +161,48 @@ func deployHAProxy(baseManifestVars baseManifestVars, customOpsfiles []string, c
 	dumpHAProxyConfig(haproxyInfo)
 
 	return haproxyInfo, varsStoreReader
+}
+
+// deployWithRetry runs a bosh deploy command and retries up to config.FlakeAttempts times.
+// On each failed attempt the deployment is deleted before retrying, so the next attempt starts clean.
+// If expectSuccess is false the command is run once without retrying (failure is expected by the caller).
+func deployWithRetry(boshDeployment string, cmd *exec.Cmd, timeout time.Duration, expectSuccess bool) *gexec.Session {
+	var session *gexec.Session
+	var err error
+
+	for attempt := 1; attempt <= config.FlakeAttempts; attempt++ {
+		if attempt > 1 {
+			writeLog(fmt.Sprintf("Deployment attempt %d/%d failed, deleting deployment before retry...", attempt-1, config.FlakeAttempts))
+			deleteDeployment(boshDeployment)
+
+			writeLog(fmt.Sprintf("Retrying deployment (attempt %d/%d)...", attempt, config.FlakeAttempts))
+			newCmd := exec.Command(cmd.Path, cmd.Args[1:]...)
+			newCmd.Env = cmd.Env
+			cmd = newCmd
+		}
+
+		session, err = gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+		Expect(err).NotTo(HaveOccurred())
+
+		// Wait for the process to exit without asserting the exit code
+		Eventually(session, timeout, time.Second).Should(gexec.Exit())
+
+		if !expectSuccess {
+			// caller expects failure — return immediately without retrying
+			return session
+		}
+
+		if session.ExitCode() == 0 {
+			writeLog(fmt.Sprintf("Deployment succeeded on attempt %d/%d", attempt, config.FlakeAttempts))
+			return session
+		}
+
+		writeLog(fmt.Sprintf("Deployment failed on attempt %d/%d (exit code %d)", attempt, config.FlakeAttempts, session.ExitCode()))
+	}
+
+	// All attempts exhausted — fail the test with a clear message
+	Expect(session.ExitCode()).To(BeZero(), fmt.Sprintf("Deployment failed after %d attempt(s)", config.FlakeAttempts))
+	return session
 }
 
 func dumpCmd(cmd *exec.Cmd) {

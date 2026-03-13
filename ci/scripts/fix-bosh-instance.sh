@@ -61,29 +61,55 @@ echo "Monitoring jobs until all are running or create-env reaches its timeout...
 while true; do
   status=$(docker exec "${director_container}" ${monit_bin} summary 2>/dev/null)
 
-  # Collect names of all failed jobs (any status that is not 'running')
-  # monit summary lines look like:  "Process 'job-name'   running"
-  failed_jobs=$(echo "${status}" | awk "/Process/{print \$2}" | tr -d "'" | \
-    while read -r job; do
-      if echo "${status}" | grep -qE "'${job}'.*(Execution failed)"; then
-        echo "${job}"
-      fi
-    done)
+  # Categorise jobs into three states:
+  #   running  — 'running'
+  #   failed   — 'Execution failed' (BPM could not start/restart the process)
+  #   pending  — anything else (Does not exist, not monitored, initializing, restart pending, etc.)
+  # monit summary lines look like:  "Process 'job-name'   <status>"
+  all_jobs=$(echo "${status}" | awk "/Process/{print \$2}" | tr -d "'")
 
-  if [ -z "${failed_jobs}" ]; then
-    echo "All jobs are running, no fix needed. Exiting." >&2
+  failed_jobs=""
+  pending_jobs=""
+  all_running=true
+
+  while read -r job; do
+    [ -z "${job}" ] && continue
+    # Extract the status portion after the job name, then strip any trailing
+    # " - <suffix>" (e.g. "Execution failed - restart pending" -> "Execution failed")
+    job_status=$(echo "${status}" | grep "'${job}'" | sed "s/.*'${job}'[[:space:]]*//" | sed "s/[[:space:]]*-[[:space:]].*//" | xargs)
+    if echo "${job_status}" | grep -qiw "running"; then
+      : # running — good
+    elif echo "${job_status}" | grep -qi "execution failed"; then
+      failed_jobs="${failed_jobs} ${job}"
+      all_running=false
+    else
+      pending_jobs="${pending_jobs} ${job}"
+      all_running=false
+    fi
+  done <<< "${all_jobs}"
+
+  if [ "${all_running}" = "true" ]; then
+    echo "All jobs are running. Exiting." >&2
     exit 0
   fi
 
-  echo "Failed jobs detected:" >&2
-  echo "${failed_jobs}" >&2
+  if [ -n "${pending_jobs}" ]; then
+    echo "Pending jobs (waiting for them to settle):${pending_jobs}" >&2
+  fi
+
+  if [ -z "${failed_jobs}" ]; then
+    echo "No failed jobs, only pending — skipping fix, will recheck..." >&2
+    sleep 10
+    continue
+  fi
+
+  echo "Failed jobs detected:${failed_jobs}" >&2
   echo "Applying fix..." >&2
 
   # For each failed job: remove its runc state dir so BPM can re-create it,
   # then restart it via monit.
-  echo "${failed_jobs}" | while read -r job; do
-    # Map monit job name to runc container id (BPM uses "bpm-<job>" convention,
-    # dots in sub-process names are encoded as ".2e")
+  for job in ${failed_jobs}; do
+    # Map monit job name to runc container id (BPM uses "bpm-<job>" convention)
     runc_id="bpm-${job}"
     docker exec "${director_container}" bash -c "
       runc_root=/var/vcap/sys/run/bpm-runc

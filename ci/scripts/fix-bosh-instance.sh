@@ -35,6 +35,8 @@ done
 echo "Waiting for postgres job to be running in director container..." >&2
 while true; do
   status=$(docker exec "${director_container}" /var/vcap/bosh/bin/monit summary 2>/dev/null)
+  echo "Monit status in director container:" >&2
+  echo "${status}" >&2
   if echo "${status}" | grep -qE "'postgres'.*running"; then
     echo "postgres is running" >&2
     break
@@ -46,6 +48,8 @@ done
 echo "Monitoring jobs until all are running or create-env reaches its timeout..." >&2
 while true; do
   status=$(docker exec "${director_container}" /var/vcap/bosh/bin/monit summary 2>/dev/null)
+  echo "Monit status in director container:" >&2
+  echo "${status}" >&2
 
   # Collect names of all failed jobs (any status that is not 'running')
   # monit summary lines look like:  "Process 'job-name'   running"

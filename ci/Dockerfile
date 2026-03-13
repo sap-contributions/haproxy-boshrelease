@@ -21,10 +21,10 @@ RUN mkdir -p /usr/local/bosh-deployment/haproxy-boshrelease
 
 # Make local BPM release
 COPY local-releases/bpm-del-runc-state.patch ./bpm-del-runc-state.patch
-RUN git clone https://github.com/cloudfoundry/bpm-release.git && cd bpm-release && git apply ../bpm-del-runc-state.patch
-RUN bosh create-release --force --timestamp-version --tarball=bpm-patched-dev-release.tgz
-COPY bpm-patched-dev-release.tgz /usr/local/bosh-deployment/haproxy-boshrelease/bpm-patched-dev-release.tgz
-RUN cd .. && rm -rf bpm-release
+RUN git clone https://github.com/cloudfoundry/bpm-release.git && cd bpm-release && git apply ../bpm-del-runc-state.patch && \
+    bosh create-release --force --timestamp-version --tarball=bpm-patched-dev-release.tgz && \
+    bpm-patched-dev-release.tgz /usr/local/bosh-deployment/haproxy-boshrelease/bpm-patched-dev-release.tgz && \
+    cd .. && rm -rf bpm-release
 
 # Copy ops files
 COPY ops/bosh-scaled-out.yml /usr/local/bosh-deployment/haproxy-boshrelease/bosh-scaled-out.yml

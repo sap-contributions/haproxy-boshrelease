@@ -26,6 +26,12 @@ func deploymentNameForTestNode() string {
 	return fmt.Sprintf("haproxy%d", GinkgoParallelProcess())
 }
 
+func deploymentBasicNameForSuite() string {
+	// TODO: set back to the thread name when https://github.com/cloudfoundry/bpm-release/issues/208 is solved
+	// return deploymentNameForTestNode()
+	return "haproxy-basic"
+}
+
 func TestAcceptanceTests(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "AcceptanceTests Suite")
@@ -46,7 +52,7 @@ var _ = SynchronizedBeforeSuite(func() []byte {
 	deployHAProxy(baseManifestVars{
 		haproxyBackendPort:    12000,
 		haproxyBackendServers: []string{"127.0.0.1"},
-		deploymentName:        deploymentNameForTestNode(),
+		deploymentName:        deploymentBasicNameForSuite(),
 	}, []string{}, map[string]interface{}{}, true)
 
 	configBytes, err := json.Marshal(&config)
@@ -61,7 +67,7 @@ var _ = SynchronizedBeforeSuite(func() []byte {
 
 var _ = SynchronizedAfterSuite(func() {
 	// Clean up deployments on each thread
-	deleteDeployment(deploymentNameForTestNode())
+	deleteDeployment(deploymentBasicNameForSuite())
 }, func() {})
 
 type TestServerOption func(*httptest.Server)

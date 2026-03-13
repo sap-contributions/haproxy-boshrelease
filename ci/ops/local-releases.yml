@@ -1,3 +1,6 @@
 - type: replace
-  path: /releases/name=bpm/url
-  value: file:///usr/local/bosh-deployment/haproxy-boshrelease/bpm-patched-dev-release.tgz
+  path: /releases/name=bpm?
+  value:
+    name: bpm
+    version: 1.4.26+patch.runc.state
+    url: file:///usr/local/bosh-deployment/haproxy-boshrelease/bpm-patched-dev-release.tgz

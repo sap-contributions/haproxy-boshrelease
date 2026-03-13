@@ -2,6 +2,8 @@
 
 set -eo pipefail
 
+SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}")
+
 function generate_certs() {
   local certs_dir
   certs_dir="${1}"
@@ -264,7 +266,7 @@ EOF
       # It will wait for the director container to run and then, if needed, fix
       # BPM/runc state so create-env can succeed without getting stuck on failed jobs.
       local fix_log="/tmp/fix-bosh-instance.log"
-      bash "ci/scripts/fix-bosh-instance.sh" >"${fix_log}" 2>&1 &
+      bash "${SCRIPT_DIR}/fix-bosh-instance.sh" >"${fix_log}" 2>&1 &
       fix_pid=$!
 
       set +e

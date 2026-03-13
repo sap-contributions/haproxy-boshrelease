@@ -61,6 +61,9 @@ core.register_service("lua_test", "http", lua_test)
 		closeTunnel := setupTunnelFromHaproxyToTestServer(haproxyInfo, haproxyBackendPort, localPort)
 		defer closeTunnel()
 
+		// TODO: remove this test once the issue https://github.com/cloudfoundry/bpm-release/issues/208 is solved
+		restartAllJobsOnDeployment(deploymentNameForTestNode())
+
 		By("Waiting monit to report HAProxy is now healthy (the lua script was uploaded after start).")
 		// Since the backend is now listening, HAProxy healthcheck should start returning healthy
 		// and monit should in turn start reporting a healthy process

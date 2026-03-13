@@ -336,6 +336,35 @@ func deleteDeployment(boshDeployment string) {
 	Eventually(session, 10*time.Minute, time.Second).Should(gexec.Exit(0))
 }
 
+func restartAllJobsOnDeployment(boshDeployment string) {
+	By(fmt.Sprintf("Restarting all jobs on deployment '%s'", boshDeployment))
+
+	bashCode := `
+runc_bin=/var/vcap/packages/bpm/bin/runc
+runc_root=/var/vcap/sys/run/bpm-runc
+
+for container_id in $(${runc_bin} --root ${runc_root} list -q 2>/dev/null); do
+  echo "Cleaning up runc container: ${container_id}" >&2
+  rm -rf "${runc_root:?}/${container_id}"
+done
+
+/var/vcap/bosh/bin/monit summary | awk '/Process/{print $2}' | tr -d "'" | \
+while read -r job; do
+  echo "Restarting monit job: ${job}" >&2
+  /var/vcap/bosh/bin/monit restart "${job}" || true
+done
+`
+
+	instances := boshInstances(boshDeployment)
+	for _, instance := range instances {
+		writeLog(fmt.Sprintf("Running runc cleanup + monit restart on %s", instance.Instance))
+		cmd := config.boshCmd(boshDeployment, "ssh", instance.Instance, "-c", bashCode)
+		session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
+		Expect(err).NotTo(HaveOccurred())
+		Eventually(session, time.Minute, time.Second).Should(gexec.Exit(0))
+	}
+}
+
 func waitForHAProxyListening(haproxyInfo haproxyInfo) {
 	Eventually(func() error {
 		return checkListening(fmt.Sprintf("%s:443", haproxyInfo.PublicIP))

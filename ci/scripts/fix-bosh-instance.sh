@@ -13,6 +13,10 @@
 #
 # We will find the director container and clean runc state dirs so monit can bring
 # the jobs back up via BPM restart.
+#
+# BPM only needs the runc state dir to be gone before it can re-create
+# the container. The orphaned cgroup scope dirs will be cleaned up by the
+# host systemd garbage collector once there are no more references to them.
 
 set +e
 
@@ -39,44 +43,48 @@ while true; do
   sleep 5
 done
 
-echo "Monitoring director job until it is running or needs fixing..." >&2
-while [ ! -f "${CREATE_ENV_DONE_FILE:-/tmp/create-env-done}" ]; do
+echo "Monitoring jobs until all are running or create-env reaches its timeout..." >&2
+while true; do
   status=$(docker exec "${director_container}" /var/vcap/bosh/bin/monit summary 2>/dev/null)
 
-  if echo "${status}" | grep -q "director.*running"; then
-    echo "director is running, no fix needed. Exiting." >&2
+  # Collect names of all failed jobs (any status that is not 'running')
+  # monit summary lines look like:  "Process 'job-name'   running"
+  failed_jobs=$(echo "${status}" | awk "/Process/{print \$2}" | tr -d "'" | \
+    while read -r job; do
+      if ! echo "${status}" | grep -q "'${job}'.*running"; then
+        echo "${job}"
+      fi
+    done)
+
+  if [ -z "${failed_jobs}" ]; then
+    echo "All jobs are running, no fix needed. Exiting." >&2
     exit 0
   fi
-  if echo "${status}" | grep -qE "director.*(Execution failed)"; then
-    echo "director job is failing, proceeding with fix..." >&2
-    break
-  fi
-  echo "director not yet running nor failing, waiting..." >&2
-  sleep 5
+
+  echo "Failed jobs detected:" >&2
+  echo "${failed_jobs}" >&2
+  echo "Applying fix..." >&2
+
+  # For each failed job: remove its runc state dir so BPM can re-create it,
+  # then restart it via monit.
+  echo "${failed_jobs}" | while read -r job; do
+    # Map monit job name to runc container id (BPM uses "bpm-<job>" convention,
+    # dots in sub-process names are encoded as ".2e")
+    runc_id="bpm-${job}"
+    docker exec "${director_container}" bash -c "
+      runc_root=/var/vcap/sys/run/bpm-runc
+      runc_id='${runc_id}'
+      if [ -d \"\${runc_root}/\${runc_id}\" ]; then
+        echo \"Removing runc state dir for \${runc_id}\" >&2
+        rm -rf \"\${runc_root:?}/\${runc_id}\"
+      fi
+      echo \"Restarting monit job: ${job}\" >&2
+      /var/vcap/bosh/bin/monit restart '${job}' || true
+    " 2>/dev/null || true
+  done
+
+  echo "Fix applied, waiting 10s before re-checking..." >&2
+  sleep 10
 done
 
-# BPM only needs the runc state dir to be gone before it can re-create
-# the container. The orphaned cgroup scope dirs will be cleaned up by the
-# host systemd garbage collector once there are no more references to them.
-docker exec "${director_container}" bash -c '
-  runc_bin=/var/vcap/packages/bpm/bin/runc
-  runc_root=/var/vcap/sys/run/bpm-runc
-
-  for container_id in $(${runc_bin} --root ${runc_root} list -q 2>/dev/null); do
-    # postgres must keep running — the director depends on it
-    [ "${container_id}" = "bpm-postgres" ] && continue
-    echo "Cleaning up runc container: ${container_id}" >&2
-    rm -rf "${runc_root:?}/${container_id}"
-  done
-
-  /var/vcap/bosh/bin/monit summary | awk "/Process/{print \$2}" | tr -d "'"'"'" | \
-  while read -r job; do
-    # Restart all monitored jobs except postgres (which must keep running
-    # as the director database — its restart is slow and will cause the same
-    # failure for director jobs, which depend on it
-    [ "${job}" = "postgres" ] && continue
-    echo "Restarting monit job: ${job}" >&2
-    /var/vcap/bosh/bin/monit restart "${job}" || true
-  done
-' 2>/dev/null || true
-
+echo "create-env completed, fix-bosh-instance exiting." >&2

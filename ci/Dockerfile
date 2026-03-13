@@ -23,7 +23,7 @@ RUN mkdir -p /usr/local/bosh-deployment/haproxy-boshrelease
 COPY local-releases/bpm-del-runc-state.patch ./bpm-del-runc-state.patch
 RUN git clone https://github.com/cloudfoundry/bpm-release.git && cd bpm-release && git apply ../bpm-del-runc-state.patch && \
     bosh create-release --force --timestamp-version --tarball=bpm-patched-dev-release.tgz && \
-    bpm-patched-dev-release.tgz /usr/local/bosh-deployment/haproxy-boshrelease/bpm-patched-dev-release.tgz && \
+    mv bpm-patched-dev-release.tgz /usr/local/bosh-deployment/haproxy-boshrelease/bpm-patched-dev-release.tgz && \
     cd .. && rm -rf bpm-release
 
 # Copy ops files

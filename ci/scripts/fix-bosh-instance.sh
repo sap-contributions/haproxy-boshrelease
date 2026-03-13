@@ -20,6 +20,7 @@
 
 set +e
 
+monit_bin=/var/vcap/bosh/bin/monit
 director_container=""
 echo "Waiting for director container to appear..." >&2
 while true; do
@@ -34,10 +35,8 @@ done
 
 echo "Waiting for postgres job to be running in director container..." >&2
 while true; do
-  status=$(docker exec "${director_container}" /var/vcap/bosh/bin/monit summary 2>/dev/null)
-  echo "Monit status in director container:" >&2
-  echo "${status}" >&2
-  if echo "${status}" | grep -qE "'postgres'.*running"; then
+  status=$(docker exec "${director_container}" ${monit_bin} summary 2>/dev/null)
+  if echo "${status}" | grep -q "'postgres'.*running"; then
     echo "postgres is running" >&2
     break
   fi
@@ -46,10 +45,21 @@ while true; do
 done
 
 echo "Monitoring jobs until all are running or create-env reaches its timeout..." >&2
+iteration=0
 while true; do
-  status=$(docker exec "${director_container}" /var/vcap/bosh/bin/monit summary 2>/dev/null)
-  echo "Monit status in director container:" >&2
-  echo "${status}" >&2
+  # Recheck the director container ID every N iterations — bosh create-env may
+  # recreate the container before starting jobs there, giving it a new ID.
+  # Stale ID causes all docker exec calls to fail silently.
+  if [ $((iteration % 4)) -eq 0 ]; then
+    new_container=$(docker ps --format "{{.ID}}" | head -1)
+    if [ -n "${new_container}" ] && [ "${new_container}" != "${director_container}" ]; then
+      echo "Director container ID changed: ${director_container} -> ${new_container}" >&2
+      director_container="${new_container}"
+    fi
+  fi
+  iteration=$((iteration + 1))
+
+  status=$(docker exec "${director_container}" ${monit_bin} summary 2>/dev/null)
 
   # Collect names of all failed jobs (any status that is not 'running')
   # monit summary lines look like:  "Process 'job-name'   running"
@@ -77,13 +87,14 @@ while true; do
     runc_id="bpm-${job}"
     docker exec "${director_container}" bash -c "
       runc_root=/var/vcap/sys/run/bpm-runc
+      monit_bin=${monit_bin}
       runc_id='${runc_id}'
       if [ -d \"\${runc_root}/\${runc_id}\" ]; then
         echo \"Removing runc state dir for \${runc_id}\" >&2
         rm -rf \"\${runc_root:?}/\${runc_id}\"
       fi
       echo \"Restarting monit job: ${job}\" >&2
-      /var/vcap/bosh/bin/monit restart '${job}' || true
+      \${monit_bin} restart '${job}' || true
     " 2>/dev/null || true
   done
 

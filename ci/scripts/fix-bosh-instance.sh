@@ -30,21 +30,10 @@ while true; do
     break
   fi
   echo "Director container not yet running, waiting..." >&2
-  sleep 5
+  sleep 10
 done
 
 echo "Waiting for postgres job to be running in director container..." >&2
-while true; do
-  status=$(docker exec "${director_container}" ${monit_bin} summary 2>/dev/null)
-  if echo "${status}" | grep -q "'postgres'.*running"; then
-    echo "postgres is running" >&2
-    break
-  fi
-  echo "postgres not yet running, waiting..." >&2
-  sleep 5
-done
-
-echo "Monitoring jobs until all are running or create-env reaches its timeout..." >&2
 iteration=0
 while true; do
   # Recheck the director container ID every N iterations — bosh create-env may
@@ -59,6 +48,17 @@ while true; do
   fi
   iteration=$((iteration + 1))
 
+  status=$(docker exec "${director_container}" ${monit_bin} summary 2>/dev/null)
+  if echo "${status}" | grep -q "'postgres'.*running"; then
+    echo "postgres is running" >&2
+    break
+  fi
+  echo "postgres not yet running, waiting..." >&2
+  sleep 3
+done
+
+echo "Monitoring jobs until all are running or create-env reaches its timeout..." >&2
+while true; do
   status=$(docker exec "${director_container}" ${monit_bin} summary 2>/dev/null)
 
   # Collect names of all failed jobs (any status that is not 'running')

@@ -263,8 +263,8 @@ EOF
       # Run fix-bosh-instance.sh in background in parallel with create-env.
       # It will wait for the director container to run and then, if needed, fix
       # BPM/runc state so create-env can succeed without getting stuck on failed jobs.
-      local fix_pid=""
-      bash "ci/scripts/fix-bosh-instance.sh" &
+      local fix_log="/tmp/fix-bosh-instance.log"
+      bash "ci/scripts/fix-bosh-instance.sh" >"${fix_log}" 2>&1 &
       fix_pid=$!
 
       set +e
@@ -276,6 +276,9 @@ EOF
       if [ -n "${fix_pid}" ]; then
         kill -9 "${fix_pid}" 2>/dev/null || true
         wait "${fix_pid}" 2>/dev/null || true
+        echo "===== fix-bosh-instance.sh log =====" >&2
+        cat "${fix_log}" >&2
+        echo "===== end fix-bosh-instance.sh log =====" >&2
       fi
       set -e
 

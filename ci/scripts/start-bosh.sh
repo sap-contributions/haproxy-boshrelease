@@ -2,7 +2,7 @@
 
 set -eo pipefail
 
-SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}")
+SCRIPT_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 
 function generate_certs() {
   local certs_dir

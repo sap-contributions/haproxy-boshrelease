@@ -248,6 +248,7 @@ EOF
         -o jumpbox-user.yml \
         -o /usr/local/ops-files/local-releases.yml \
         -o "$ops_files_dir/bosh-scaled-out.yml" \
+        -o "$ops_files_dir/bosh-timeouts.yml" \
         -v director_name=docker \
         -v internal_cidr=${docker_network_cidr} \
         -v internal_gw=10.245.0.1 \

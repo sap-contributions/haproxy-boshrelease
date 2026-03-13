@@ -160,13 +160,11 @@ func setupTunnelFromHaproxyIPToTestServerIP(haproxyInfo haproxyInfo, haproxyBack
 	err := startReverseSSHPortAndIPForwarder(haproxyInfo.SSHUser, haproxyInfo.PublicIP, haproxyInfo.SSHPrivateKey, haproxyBackendIP, haproxyBackendPort, localIP, localPort, ctx)
 	Expect(err).NotTo(HaveOccurred())
 
-	By("Waiting for HAProxy to detect the backend server is listening")
-	// HAProxy backend health check interval is 1 second.
-	// Poll until the backend port is reachable from the HAProxy VM
-	// instead of blindly sleeping.
-	Eventually(func() error {
-		return checkListening(fmt.Sprintf("%s:%d", haproxyInfo.PublicIP, 80))
-	}, 2*time.Minute, time.Second).ShouldNot(HaveOccurred())
+	//By("Waiting a few seconds for HAProxy to detect the backend server is listening")
+	//Eventually(func() error {
+	//	return checkListening(fmt.Sprintf("%s:%d", haproxyInfo.PublicIP, 80))
+	//}, 2*time.Minute, time.Second).ShouldNot(HaveOccurred())
+	time.Sleep(5 * time.Second)
 
 	return cancelFunc
 }

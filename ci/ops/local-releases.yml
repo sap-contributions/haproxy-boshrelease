@@ -1,0 +1,3 @@
+- type: replace
+  path: /releases/name=bpm/url
+  value: file:///usr/local/bosh-deployment/haproxy-boshrelease/local-releases.yml

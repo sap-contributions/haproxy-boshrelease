@@ -251,6 +251,7 @@ EOF
         -o /usr/local/ops-files/local-releases.yml \
         -o "$ops_files_dir/bosh-scaled-out.yml" \
         -o "$ops_files_dir/bosh-timeouts.yml" \
+        -o "$ops_files_dir/local-releases.yml" \
         -v director_name=docker \
         -v internal_cidr=${docker_network_cidr} \
         -v internal_gw=10.245.0.1 \
@@ -261,33 +262,33 @@ EOF
         "${@}" > "${local_bosh_dir}/bosh-director.yml"
 
       echo "Creating BOSH director environment..." >&2
-
-      # Run fix-bosh-instance.sh in background in parallel with create-env.
-      # It will wait for the director container to run and then, if needed, fix
-      # BPM/runc state so create-env can succeed without getting stuck on failed jobs.
-      local fix_log="/tmp/fix-bosh-instance.log"
-      bash "${SCRIPT_DIR}/fix-bosh-instance.sh" >"${fix_log}" 2>&1 &
-      fix_pid=$!
-
-      set +e
+#
+#      # Run fix-bosh-instance.sh in background in parallel with create-env.
+#      # It will wait for the director container to run and then, if needed, fix
+#      # BPM/runc state so create-env can succeed without getting stuck on failed jobs.
+#      local fix_log="/tmp/fix-bosh-instance.log"
+#      bash "${SCRIPT_DIR}/fix-bosh-instance.sh" >"${fix_log}" 2>&1 &
+#      fix_pid=$!
+#
+#      set +e
       bosh create-env "${local_bosh_dir}/bosh-director.yml" \
         --vars-store="${local_bosh_dir}/creds.yml" \
         --state="${local_bosh_dir}/state.json"
-      local create_env_rc=$?
-
-      if [ -n "${fix_pid}" ]; then
-        kill -9 "${fix_pid}" 2>/dev/null || true
-        wait "${fix_pid}" 2>/dev/null || true
-        echo "===== fix-bosh-instance.sh log =====" >&2
-        cat "${fix_log}" >&2
-        echo "===== end fix-bosh-instance.sh log =====" >&2
-      fi
-      set -e
-
-      if [ "${create_env_rc}" -ne "0" ]; then
-        echo "bosh create-env failed (exit code ${create_env_rc}). Exiting." >&2
-        exit 1
-      fi
+#      local create_env_rc=$?
+#
+#      if [ -n "${fix_pid}" ]; then
+#        kill -9 "${fix_pid}" 2>/dev/null || true
+#        wait "${fix_pid}" 2>/dev/null || true
+#        echo "===== fix-bosh-instance.sh log =====" >&2
+#        cat "${fix_log}" >&2
+#        echo "===== end fix-bosh-instance.sh log =====" >&2
+#      fi
+#      set -e
+#
+#      if [ "${create_env_rc}" -ne "0" ]; then
+#        echo "bosh create-env failed (exit code ${create_env_rc}). Exiting." >&2
+#        exit 1
+#      fi
 
       echo "Extracting BOSH director credentials and CA certificate..." >&2
       bosh int "${local_bosh_dir}/creds.yml" --path /director_ssl/ca > "${local_bosh_dir}/ca.crt"

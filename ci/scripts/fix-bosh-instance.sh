@@ -35,7 +35,7 @@ done
 echo "Waiting for postgres job to be running in director container..." >&2
 while true; do
   status=$(docker exec "${director_container}" /var/vcap/bosh/bin/monit summary 2>/dev/null)
-  if echo "${status}" | grep -q "postgres.*running"; then
+  if echo "${status}" | grep -qE "'postgres'.*running"; then
     echo "postgres is running" >&2
     break
   fi
@@ -51,7 +51,7 @@ while true; do
   # monit summary lines look like:  "Process 'job-name'   running"
   failed_jobs=$(echo "${status}" | awk "/Process/{print \$2}" | tr -d "'" | \
     while read -r job; do
-      if ! echo "${status}" | grep -q "'${job}'.*running"; then
+      if echo "${status}" | grep -qE "'${job}'.*(Execution failed)"; then
         echo "${job}"
       fi
     done)

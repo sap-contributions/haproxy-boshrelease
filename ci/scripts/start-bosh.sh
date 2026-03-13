@@ -242,16 +242,16 @@ EOF
 }
 EOF
 
-      local ops_files_dir="$PWD/haproxy-boshrelease"
+      local customization_dir="$PWD/haproxy-boshrelease"
 
       echo "Interpolating BOSH deployment manifest with Docker CPI and TLS configuration..." >&2
       bosh int bosh.yml \
         -o docker/cpi.yml \
         -o jumpbox-user.yml \
         -o /usr/local/ops-files/local-releases.yml \
-        -o "$ops_files_dir/bosh-scaled-out.yml" \
-        -o "$ops_files_dir/bosh-timeouts.yml" \
-        -o "$ops_files_dir/local-releases.yml" \
+        -o "$customization_dir/bosh-scaled-out.yml" \
+        -o "$customization_dir/bosh-timeouts.yml" \
+        -o "$customization_dir/local-releases.yml" \
         -v director_name=docker \
         -v internal_cidr=${docker_network_cidr} \
         -v internal_gw=10.245.0.1 \
@@ -286,8 +286,15 @@ EOF
       echo "Updating BOSH cloud config with Docker network..." >&2
       bosh -n update-cloud-config \
         docker/cloud-config.yml \
-        -o "$ops_files_dir/compilation.yml" \
+        -o "$customization_dir/compilation.yml" \
         -v network="${docker_network_name}"
+
+      echo "Upload local releases..." >&2
+      for release_tgz in "${customization_dir}"/*.tgz; do
+        [ -f "${release_tgz}" ] || continue
+        echo "Uploading release: ${release_tgz}" >&2
+        bosh -n upload-release "${release_tgz}"
+      done
 
   popd > /dev/null
 }

@@ -159,7 +159,7 @@ func setupTunnelFromHaproxyIPToTestServerIP(haproxyInfo haproxyInfo, haproxyBack
 	// Poll until the backend port is reachable from the HAProxy VM
 	// instead of blindly sleeping.
 	Eventually(func() error {
-		return checkListening(fmt.Sprintf("%s:%d", haproxyInfo.PublicIP, "80"))
+		return checkListening(fmt.Sprintf("%s:%d", haproxyInfo.PublicIP, 80))
 	}, 2*time.Minute, time.Second).ShouldNot(HaveOccurred())
 
 	return cancelFunc

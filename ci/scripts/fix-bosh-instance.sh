@@ -51,6 +51,8 @@ while [ ! -f "${CREATE_ENV_DONE_FILE:-/tmp/create-env-done}" ]; do
     echo "director job is failing, proceeding with fix..." >&2
     break
   fi
+  echo "director not yet running nor failing, waiting..." >&2
+  sleep 5
 done
 
 # BPM only needs the runc state dir to be gone before it can re-create

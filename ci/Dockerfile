@@ -3,7 +3,7 @@ FROM ghcr.io/cloudfoundry/bosh/docker-cpi:latest
 # Install all necessary tools for haproxy testflight and dependency autobump
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
-    apt-get install -y wget jq git vim nano python3-pip python3-venv && \
+    apt-get install -y tar wget jq git vim nano python3-pip python3-venv && \
     apt-get install -y build-essential zlib1g-dev ruby ruby-dev openssl libxslt1-dev libxml2-dev libssl-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3 && \
     apt-get clean
 
@@ -24,6 +24,7 @@ COPY local-releases/bpm-del-runc-state.patch ./bpm-del-runc-state.patch
 RUN git clone https://github.com/cloudfoundry/bpm-release.git && cd bpm-release && git apply ../bpm-del-runc-state.patch && \
     bosh create-release --force --timestamp-version --tarball=bpm-patched-dev-release.tgz && \
     mv bpm-patched-dev-release.tgz /usr/local/bosh-deployment/haproxy-boshrelease/bpm-patched-dev-release.tgz && \
+    chmod 644 /usr/local/bosh-deployment/haproxy-boshrelease/bpm-patched-dev-release.tgz && \
     cd .. && rm -rf bpm-release
 
 # Copy ops files

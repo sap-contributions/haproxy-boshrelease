@@ -125,6 +125,7 @@ jobs:
         - get: haproxy-boshrelease-testflight
       - task: acceptance-tests
         privileged: true
+        timeout: 4h
         image: haproxy-boshrelease-testflight
         config:
           platform: linux
@@ -137,7 +138,8 @@ jobs:
             args: []
           params:
             REPO_ROOT:            git
-      on_failure:
+            SUITE_TIMEOUT:        3h
+            GRACE_PERIOD:         10m
         put: notify
         params:
           channel:  "#haproxy-boshrelease"
@@ -163,6 +165,7 @@ jobs:
           list_changed_files: true
       - task: acceptance-tests
         privileged: true
+        timeout: 4h
         image: haproxy-boshrelease-testflight
         config:
           platform: linux
@@ -175,6 +178,8 @@ jobs:
             args: []
           params:
             REPO_ROOT:            git-pull-requests
+            SUITE_TIMEOUT:        3h
+            GRACE_PERIOD:         10m
     on_success:
       put: git-pull-requests
       params:

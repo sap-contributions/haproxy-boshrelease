@@ -67,6 +67,24 @@ else
 fi
 echo "------------------------------------------------------------------"
 
-ginkgo "$VERBOSITY_FLAG" "$PARALLELISM" -r --trace --show-node-events --randomize-all --flake-attempts "$FLAKE_ATTEMPTS" "${ADDITIONAL_ARGS[@]}"
+echo "------------------------------------------------------------------"
+if [ -n "${SUITE_TIMEOUT:-}" ]; then
+  echo "SUITE_TIMEOUT is set. Will run ginkgo with '--timeout=$SUITE_TIMEOUT'"
+else
+  SUITE_TIMEOUT="1h"
+  echo "SUITE_TIMEOUT is not set. Using default '$SUITE_TIMEOUT'"
+fi
+echo "------------------------------------------------------------------"
+
+echo "------------------------------------------------------------------"
+if [ -n "${GRACE_PERIOD:-}" ]; then
+  echo "GRACE_PERIOD is set. Will run ginkgo with '--grace-period=$GRACE_PERIOD'"
+else
+  GRACE_PERIOD="30s"
+  echo "GRACE_PERIOD is not set. Using default '$GRACE_PERIOD'"
+fi
+echo "------------------------------------------------------------------"
+
+ginkgo "$VERBOSITY_FLAG" "$PARALLELISM" -r --trace --show-node-events --randomize-all --flake-attempts "$FLAKE_ATTEMPTS" --timeout "$SUITE_TIMEOUT" --grace-period "$GRACE_PERIOD" "${ADDITIONAL_ARGS[@]}"
 
 keep_running_info

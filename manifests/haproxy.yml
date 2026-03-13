@@ -37,7 +37,7 @@ stemcells:
 releases:
 - name: bpm
   version: 1.4.26
-  url: https://bosh.io/d/github.com/cloudfoundry/bpm-release?v=1.4.26
+  url: file:///usr/local/bosh-deployment/haproxy-boshrelease/bpm-patched-dev-release.tgz
   sha1: sha256:40af85114d2a8a67812bf65212076581ea42cefcf67ee6b8d78d778ed1ca2b85
 - name: haproxy
   version: 16.4.0+3.2.13

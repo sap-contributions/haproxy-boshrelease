@@ -4,12 +4,9 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"strconv"
 )
 
 var config Config
-
-const DEFAULT_FLAKE_ATTEMPTS = 5
 
 type Config struct {
 	ReleaseRepoPath  string `json:"releaseRepoPath"`
@@ -21,7 +18,6 @@ type Config struct {
 	BoshPath         string `json:"boshPath"`
 	BaseManifestPath string `json:"baseManifestPath"`
 	HomePath         string `json:"homePath"`
-	FlakeAttempts    int    `json:"flakeAttempts"`
 }
 
 func loadConfig() (Config, error) {
@@ -71,15 +67,6 @@ func loadConfig() (Config, error) {
 		return Config{}, err
 	}
 
-	flakeAttempts := DEFAULT_FLAKE_ATTEMPTS
-	if val := os.Getenv("FLAKE_ATTEMPTS"); val != "" {
-		if flakeAttemptsFromEnv, err := strconv.Atoi(val); err == nil && flakeAttemptsFromEnv > 0 {
-			flakeAttempts = flakeAttemptsFromEnv
-		} else {
-			writeLog(fmt.Sprintf("FLAKE_ATTEMPTS must be a positive integer, but got: %s, so defaulting test suite's flakeAttempts to %d", val, DEFAULT_FLAKE_ATTEMPTS))
-		}
-	}
-
 	return Config{
 		ReleaseRepoPath:  releaseRepoPath,
 		ReleaseVersion:   releaseVersion,
@@ -90,7 +77,6 @@ func loadConfig() (Config, error) {
 		BoshPath:         boshPath,
 		BaseManifestPath: baseManifestPath,
 		HomePath:         homePath,
-		FlakeAttempts:    flakeAttempts,
 	}, nil
 }
 

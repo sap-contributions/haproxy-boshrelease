@@ -26,12 +26,6 @@ func deploymentNameForTestNode() string {
 	return fmt.Sprintf("haproxy%d", GinkgoParallelProcess())
 }
 
-func deploymentBasicNameForSuite() string {
-	// TODO: set back to the thread name when https://github.com/cloudfoundry/bpm-release/issues/208 is solved
-	// return deploymentNameForTestNode()
-	return "haproxy-basic"
-}
-
 func TestAcceptanceTests(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "AcceptanceTests Suite")
@@ -52,7 +46,7 @@ var _ = SynchronizedBeforeSuite(func() []byte {
 	deployHAProxy(baseManifestVars{
 		haproxyBackendPort:    12000,
 		haproxyBackendServers: []string{"127.0.0.1"},
-		deploymentName:        deploymentBasicNameForSuite(),
+		deploymentName:        deploymentNameForTestNode(),
 	}, []string{}, map[string]interface{}{}, true)
 
 	configBytes, err := json.Marshal(&config)
@@ -67,7 +61,7 @@ var _ = SynchronizedBeforeSuite(func() []byte {
 
 var _ = SynchronizedAfterSuite(func() {
 	// Clean up deployments on each thread
-	deleteDeployment(deploymentBasicNameForSuite())
+	deleteDeployment(deploymentNameForTestNode())
 }, func() {})
 
 type TestServerOption func(*httptest.Server)
@@ -160,10 +154,10 @@ func setupTunnelFromHaproxyIPToTestServerIP(haproxyInfo haproxyInfo, haproxyBack
 	err := startReverseSSHPortAndIPForwarder(haproxyInfo.SSHUser, haproxyInfo.PublicIP, haproxyInfo.SSHPrivateKey, haproxyBackendIP, haproxyBackendPort, localIP, localPort, ctx)
 	Expect(err).NotTo(HaveOccurred())
 
-	//By("Waiting a few seconds for HAProxy to detect the backend server is listening")
-	//Eventually(func() error {
-	//	return checkListening(fmt.Sprintf("%s:%d", haproxyInfo.PublicIP, 80))
-	//}, 2*time.Minute, time.Second).ShouldNot(HaveOccurred())
+	By("Waiting a few seconds so that HAProxy can detect the backend server is listening")
+	// HAProxy backend health check interval is 1 second
+	// So we wait five seconds here to ensure that HAProxy
+	// has time to verify that the backend is now up
 	time.Sleep(5 * time.Second)
 
 	return cancelFunc

@@ -20,7 +20,8 @@ RUN echo "source /tmp/local-bosh/director/env" >> /root/.bashrc
 RUN mkdir -p /usr/local/bosh-deployment/haproxy-boshrelease
 
 # Make local BPM release
-RUN git clone https://github.com/cloudfoundry/bpm-release.git && cd bpm-release && git apply ../local-releases/bpm-del-runc-state.patch
+COPY local-releases/bpm-del-runc-state.patch ./bpm-del-runc-state.patch
+RUN git clone https://github.com/cloudfoundry/bpm-release.git && cd bpm-release && git apply ../bpm-del-runc-state.patch
 RUN bosh create-release --force --timestamp-version --tarball=bpm-patched-dev-release.tgz
 COPY bpm-patched-dev-release.tgz /usr/local/bosh-deployment/haproxy-boshrelease/bpm-patched-dev-release.tgz
 RUN cd .. && rm -rf bpm-release

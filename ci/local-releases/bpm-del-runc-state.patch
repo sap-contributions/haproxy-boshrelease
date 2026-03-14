@@ -1,12 +1,35 @@
 diff --git a/src/bpm/runc/client/client.go b/src/bpm/runc/client/client.go
-index f9a2591c..e50a9390 100644
+index f9a2591c..06c15119 100644
 --- a/src/bpm/runc/client/client.go
 +++ b/src/bpm/runc/client/client.go
-@@ -228,6 +228,12 @@ func (c *RuncClient) DeleteContainer(containerID string) error {
+@@ -228,6 +228,35 @@ func (c *RuncClient) DeleteContainer(containerID string) error {
  	return runcCmd.Run()
  }
  
-+func (c *RuncClient) DeleteState(containerID string) error {
++func (c *RuncClient) CleanupState(containerID string) error {
++	// kill all lingering processes in the job's cgroup scope dirs.
++	scopeName := fmt.Sprintf("runc-%s.scope", containerID)
++	cgroupDirs, _ := filepath.Glob(fmt.Sprintf("/sys/fs/cgroup/*/system.slice/%s", scopeName))
++	cgroupV2Dirs, _ := filepath.Glob(fmt.Sprintf("/sys/fs/cgroup/system.slice/%s", scopeName))
++	cgroupDirs = append(cgroupDirs, cgroupV2Dirs...)
++	killPidsFromFile := func(path string) {
++		if data, err := os.ReadFile(path); err == nil && len(data) > 0 {
++			for _, line := range strings.Split(string(data), "\n") {
++				var pid int
++				if _, err := fmt.Sscanf(strings.TrimSpace(line), "%d", &pid); err == nil && pid > 0 {
++					_ = syscall.Kill(pid, syscall.SIGKILL)
++				}
++			}
++		}
++	}
++	for _, cgDir := range cgroupDirs {
++		if info, err := os.Stat(cgDir); err == nil && info.IsDir() {
++			killPidsFromFile(filepath.Join(cgDir, "cgroup.procs"))
++			killPidsFromFile(filepath.Join(cgDir, "tasks"))
++		}
++	}
++
++	// remove the runc state dir so BPM can re-create the container.
 +	args := []string{"-rf", fmt.Sprintf("%s/%s", c.runcRoot, containerID)}
 +	cmd := exec.Command("rm", args...)
 +	return cmd.Run()
@@ -16,14 +39,14 @@ index f9a2591c..e50a9390 100644
  	return os.RemoveAll(bundlePath)
  }
 diff --git a/src/bpm/runc/lifecycle/lifecycle.go b/src/bpm/runc/lifecycle/lifecycle.go
-index 0621e2d0..cf25b158 100644
+index 0621e2d0..bd00d40d 100644
 --- a/src/bpm/runc/lifecycle/lifecycle.go
 +++ b/src/bpm/runc/lifecycle/lifecycle.go
 @@ -74,6 +74,7 @@ type RuncClient interface {
  	ContainerState(containerID string) (*specs.State, error)
  	ListContainers() ([]client.ContainerState, error)
  	SignalContainer(containerID string, signal client.Signal) error
-+	DeleteState(containerID string) error
++	CleanupState(containerID string) error
  	DeleteContainer(containerID string) error
  	DestroyBundle(bundlePath string) error
  }
@@ -31,8 +54,8 @@ index 0621e2d0..cf25b158 100644
  }
  
  func (j *RuncLifecycle) RemoveProcess(logger lager.Logger, cfg *config.BPMConfig) error {
-+	logger.Info("forcefully-deleting-runc-state")
-+	if err := j.runcClient.DeleteState(cfg.ContainerID()); err != nil {
++	logger.Info("forcefully-cleanup-runc-state")
++	if err := j.runcClient.CleanupState(cfg.ContainerID()); err != nil {
 +		return err
 +	}
 +

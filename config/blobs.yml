@@ -1,3 +1,7 @@
+aws-lc/aws-lc-1.70.0.tar.gz:
+  size: 145441069
+  object_id: 8f5e94cb-18aa-4a45-56a1-1b4a98689ac7
+  sha: sha256:533dd3f35639f44784c8ad9b73c279ec3959aba79c63b9726dd8066564b2058f
 haproxy/haproxy-3.2.14.tar.gz:
   size: 5135075
   object_id: fd7bf3fa-26e3-4102-4bbc-42e423af993f

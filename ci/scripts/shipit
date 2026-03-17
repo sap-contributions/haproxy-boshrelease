@@ -27,6 +27,7 @@ header() {
 : "${GIT_USER_EMAIL:?required}" # The e-mail address for GIT commits is mandatory. This should be a user that is allowed to push to master.
 : "${VERSION_FROM:?required}" # The path to the Version file
 : "${GCP_SERVICE_KEY:?required}" # The GCP service key for accessing the blobstore, written to a temporary private.yml.
+: "${AWS_LC_TARBALL:?required}" # Path to the AWS-LC source tarball (e.g. aws-lc-1.70.0.tar.gz) used for building aws-lc releases.
 
 if [[ ! -f "${VERSION_FROM}" ]]; then
   echo >&2 "Version file (${VERSION_FROM}) not found.  Did you misconfigure Concourse?"
@@ -168,7 +169,7 @@ pushd "${REPO_ROOT}"
   git status
   git commit -m "release v${VERSION}"
 
-  # After creating a final release we will also create a dev release patches from haproxy-patches directory
+  # After creating a final release we will also create a dev release with patches from haproxy-patches directory
   echo "- haproxy/patches.tar.gz" >> packages/haproxy/spec
   tar -czvf haproxy-patches.tar.gz haproxy-patches
   bosh add-blob haproxy-patches.tar.gz haproxy/patches.tar.gz
@@ -177,7 +178,34 @@ pushd "${REPO_ROOT}"
   bosh -n create-release --force --version "${VERSION}-patched" \
     --tarball "../${RELEASE_NAME}-${VERSION}-patched.tgz"
 
-  # Undo changes to repo from creating dev release
+  # Undo changes to repo from creating patched dev release
+  git clean -df
+  git reset --hard
+
+  # Create aws-lc release (no patches)
+  echo "- haproxy/aws-lc-*.tar.gz" >> packages/haproxy/spec
+  bosh add-blob "${AWS_LC_TARBALL}" "haproxy/$(basename "${AWS_LC_TARBALL}")"
+  bosh upload-blobs
+
+  bosh -n create-release --force --version "${VERSION}-aws-lc" \
+    --tarball "../${RELEASE_NAME}-${VERSION}-aws-lc.tgz"
+
+  # Undo changes to repo from creating aws-lc dev release
+  git clean -df
+  git reset --hard
+
+  # Create aws-lc-patched release (aws-lc + patches)
+  echo "- haproxy/patches.tar.gz" >> packages/haproxy/spec
+  echo "- haproxy/aws-lc-*.tar.gz" >> packages/haproxy/spec
+  tar -czvf haproxy-patches.tar.gz haproxy-patches
+  bosh add-blob haproxy-patches.tar.gz haproxy/patches.tar.gz
+  bosh add-blob "${AWS_LC_TARBALL}" "haproxy/$(basename "${AWS_LC_TARBALL}")"
+  bosh upload-blobs
+
+  bosh -n create-release --force --version "${VERSION}-aws-lc-patched" \
+    --tarball "../${RELEASE_NAME}-${VERSION}-aws-lc-patched.tgz"
+
+  # Undo changes to repo from creating aws-lc-patched dev release
   git clean -df
   git reset --hard
 popd
@@ -205,6 +233,58 @@ releases:
 
 # for deployments with sha256, use the following line instead:
 # sha1: "sha256:${PATCHED_SHA256}"
+\`\`\`
+EOF
+
+mkdir -p "${RELEASE_ROOT}/artifacts-aws-lc"
+mv "${RELEASE_NAME}-${VERSION}-aws-lc.tgz" "${RELEASE_ROOT}/artifacts-aws-lc"
+
+AWS_LC_RELEASE_TGZ=${RELEASE_ROOT}/artifacts-aws-lc/${RELEASE_NAME}-${VERSION}-aws-lc.tgz
+# shellcheck disable=SC2155
+export AWS_LC_SHA1=$(sha1sum "${AWS_LC_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
+echo "AWS_LC_SHA1=${AWS_LC_SHA1}"
+# shellcheck disable=SC2155
+export AWS_LC_SHA256=$(sha256sum "${AWS_LC_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
+echo "AWS_LC_SHA256=${AWS_LC_SHA256}"
+
+cat >> "${RELEASE_ROOT}/notes.md" <<EOF
+
+### Deployment (aws-lc)
+\`\`\`yaml
+releases:
+- name: "${RELEASE_NAME}"
+  version: "${VERSION}-aws-lc"
+  url: "https://github.com/${GITHUB_OWNER}/${RELEASE_NAME}-boshrelease/releases/download/v${VERSION}/${RELEASE_NAME}-${VERSION}-aws-lc.tgz"
+  sha1: "${AWS_LC_SHA1}"
+
+# for deployments with sha256, use the following line instead:
+# sha1: "sha256:${AWS_LC_SHA256}"
+\`\`\`
+EOF
+
+mkdir -p "${RELEASE_ROOT}/artifacts-aws-lc-patched"
+mv "${RELEASE_NAME}-${VERSION}-aws-lc-patched.tgz" "${RELEASE_ROOT}/artifacts-aws-lc-patched"
+
+AWS_LC_PATCHED_RELEASE_TGZ=${RELEASE_ROOT}/artifacts-aws-lc-patched/${RELEASE_NAME}-${VERSION}-aws-lc-patched.tgz
+# shellcheck disable=SC2155
+export AWS_LC_PATCHED_SHA1=$(sha1sum "${AWS_LC_PATCHED_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
+echo "AWS_LC_PATCHED_SHA1=${AWS_LC_PATCHED_SHA1}"
+# shellcheck disable=SC2155
+export AWS_LC_PATCHED_SHA256=$(sha256sum "${AWS_LC_PATCHED_RELEASE_TGZ}" | head -n1 | awk '{print $1}')
+echo "AWS_LC_PATCHED_SHA256=${AWS_LC_PATCHED_SHA256}"
+
+cat >> "${RELEASE_ROOT}/notes.md" <<EOF
+
+### Deployment (aws-lc-patched)
+\`\`\`yaml
+releases:
+- name: "${RELEASE_NAME}"
+  version: "${VERSION}-aws-lc-patched"
+  url: "https://github.com/${GITHUB_OWNER}/${RELEASE_NAME}-boshrelease/releases/download/v${VERSION}/${RELEASE_NAME}-${VERSION}-aws-lc-patched.tgz"
+  sha1: "${AWS_LC_PATCHED_SHA1}"
+
+# for deployments with sha256, use the following line instead:
+# sha1: "sha256:${AWS_LC_PATCHED_SHA256}"
 \`\`\`
 EOF
 

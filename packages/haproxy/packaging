@@ -39,7 +39,7 @@ pushd socat-${SOCAT_VERSION}
   chmod 755 ${BOSH_INSTALL_TARGET}/bin/socat
 popd
 
-AWS_LC_TARBALL=$(ls haproxy/aws-lc-*.tar.gz 2>/dev/null | head -1)
+AWS_LC_TARBALL=$(ls haproxy/aws-lc-*.tar.gz 2>/dev/null | head -1 || true)
 if [ -n "${AWS_LC_TARBALL}" ]; then
   AWS_LC_VERSION=$(echo "${AWS_LC_TARBALL}" | sed -E 's|haproxy/aws-lc-(.+)\.tar\.gz|\1|')
   echo "Building AWS-LC ${AWS_LC_VERSION}..."

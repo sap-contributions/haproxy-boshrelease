@@ -1,5 +1,5 @@
 ---
-name: ttar
+name: aws-lc
 dependencies: []
 files:
   - aws-lc/aws-lc-*.tar.gz

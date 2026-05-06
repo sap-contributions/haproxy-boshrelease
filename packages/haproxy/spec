@@ -7,3 +7,4 @@ files:
 - haproxy/lua-*.tar.gz
 - haproxy/hatop-*
 - hatop-wrapper
+- haproxy-versions.sh

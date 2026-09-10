@@ -24,9 +24,8 @@ HAPROXY_VERSION = "3.2"
 LUA_VERSION = "5.4"
 PCRE_VERSION = "10"
 HATOP_VERSION = "0"
-AWS_LC_VERSION = "5"
+AWS_LC_VERSION = "4"  # LTS line (v4.x); builds both FIPS and non-FIPS
 CMAKE_VERSION = "4"
-AWS_LC_FIPS_VERSION = "4"
 GOLANG_VERSION = "1.27"
 
 # Required Environment Vars
@@ -110,6 +109,8 @@ class Dependency:
     pinned_version: str
     root_url: str
     package: str = "haproxy"
+    filename_suffix: str = ".tar.gz"
+    blob_version_prefix: str = ""
     remote_repo = gh.get_repo(f"{PR_ORG}/haproxy-boshrelease")
 
     _latest_release: Optional[Release] = None
@@ -166,7 +167,7 @@ class Dependency:
         raise NotImplementedError
 
     def blob_filename(self, ver) -> str:
-        return f"{self.name}-{ver}.tar.gz"
+        return f"{self.name}-{self.blob_version_prefix}{ver}{self.filename_suffix}"
 
     def remove_current_blob(self):
         current_blob_path = f"{self.package}/{self.blob_filename(self.current_version)}"
@@ -267,11 +268,6 @@ class Dependency:
 class GithubDependency(Dependency):
 
     tagname_prefix: str = ""
-    filename_suffix: str = ".tar.gz"
-    blob_version_prefix: str = ""
-
-    def blob_filename(self, ver) -> str:
-        return f"{self.name}-{self.blob_version_prefix}{ver}{self.filename_suffix}"
 
     def fetch_latest_release(self) -> Release:
         repo_org_and_name = self.root_url.lstrip("https://github.com/")
@@ -598,7 +594,11 @@ def main() -> None:
             tagname_prefix="v",
             filename_suffix="",
         ),
-        GithubDependency(
+        # AWS-LC LTS line (v4.x). One source blob builds both the non-FIPS and
+        # FIPS variants; FIPS is a build-time flag, not a separate release.
+        # LTS tags ship as archive tarballs (no release assets), so use
+        # GithubArchiveDependency; blob_version_prefix keeps the aws-lc-v* name.
+        GithubArchiveDependency(
             "aws-lc",
             "AWS_LC_VERSION",
             AWS_LC_VERSION,
@@ -606,19 +606,16 @@ def main() -> None:
             tagname_prefix="v",
             blob_version_prefix="v",
         ),
-        GithubArchiveDependency(
-            "aws-lc-fips",
-            "AWS_LC_FIPS_VERSION",
-            AWS_LC_FIPS_VERSION,
-            "https://github.com/aws/aws-lc",
-            tagname_prefix="v",
-        ),
         GithubDependency(
             "cmake",
             "CMAKE_VERSION",
             CMAKE_VERSION,
             "https://github.com/Kitware/CMake",
             tagname_prefix="v",
+            # We ship the prebuilt Linux binary tarball, not the source. This
+            # both selects the right release asset and produces a blob name
+            # (cmake-X.Y.Z-linux-x86_64.tar.gz) matching the packaging scripts.
+            filename_suffix="-linux-x86_64.tar.gz",
         ),
         GolangDependency(
             "golang",

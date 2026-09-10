@@ -27,7 +27,7 @@
 #   ./scripts/dev-build.sh --upload-only            # upload everything in builds/
 #
 # Prerequisites:
-#   - All blobs present locally (bosh add-blob done for aws-lc, cmake, golang, aws-lc-fips)
+#   - All blobs present locally (bosh add-blob done for aws-lc, cmake, golang)
 #   - haproxy-patches/ directory exists with .patch files
 #
 
@@ -36,8 +36,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR/.."
 
-# Pull in AWS_LC_VERSION / AWS_LC_FIPS_VERSION so they can be embedded in
-# variant suffixes — keeps dev tarball filenames self-describing.
+# Pull in AWS_LC_VERSION so it can be embedded in variant suffixes — keeps dev
+# tarball filenames self-describing.
 # shellcheck disable=SC1091
 source src/haproxy-versions.sh
 
@@ -58,9 +58,9 @@ variant_suffix() {
   case "$1" in
     awslc)              echo "awslc-${AWS_LC_VERSION}" ;;
     awslc-patched)      echo "awslc-${AWS_LC_VERSION}-patched" ;;
-    awslc-fips)         echo "awslc-fips-${AWS_LC_FIPS_VERSION}" ;;
-    awslc-fips-patched) echo "awslc-fips-${AWS_LC_FIPS_VERSION}-patched" ;;
-    multi)              echo "multi-awslc-${AWS_LC_VERSION}-fips-${AWS_LC_FIPS_VERSION}" ;;
+    awslc-fips)         echo "awslc-fips-${AWS_LC_VERSION}" ;;
+    awslc-fips-patched) echo "awslc-fips-${AWS_LC_VERSION}-patched" ;;
+    multi)              echo "multi-awslc-${AWS_LC_VERSION}" ;;
     *)                  echo "$1" ;;
   esac
 }
@@ -217,7 +217,7 @@ fi
 # --- 5. AWS-LC FIPS ---
 if should_build awslc-fips; then
   reset_spec
-  echo "- haproxy/aws-lc-fips-*.tar.gz" >> "$SPEC_FILE"
+  echo "- haproxy/aws-lc-v*.tar.gz" >> "$SPEC_FILE"
   echo "- haproxy/cmake-*.tar.gz" >> "$SPEC_FILE"
   echo "- haproxy/golang-*.tar.gz" >> "$SPEC_FILE"
   build_release "awslc-fips"
@@ -227,7 +227,7 @@ fi
 if should_build awslc-fips-patched; then
   reset_spec
   add_patches_to_spec
-  echo "- haproxy/aws-lc-fips-*.tar.gz" >> "$SPEC_FILE"
+  echo "- haproxy/aws-lc-v*.tar.gz" >> "$SPEC_FILE"
   echo "- haproxy/cmake-*.tar.gz" >> "$SPEC_FILE"
   echo "- haproxy/golang-*.tar.gz" >> "$SPEC_FILE"
   tar -czf haproxy-patches.tar.gz haproxy-patches

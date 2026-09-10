@@ -1,3 +1,7 @@
+haproxy/aws-lc-v4.0.0.tar.gz:
+  size: 130854647
+  object_id: d911b2d3-6b54-4621-7d49-fb71b48d0968
+  sha: sha256:dec49e5c38dd8d3b4c2700c692bbb457a149cd6d23ad99463ce3612720c23bb0
 haproxy/cmake-4.4.3-linux-x86_64.tar.gz:
   size: 64872980
   object_id: b0d691d9-69ed-4964-51e8-cfaa7848976f

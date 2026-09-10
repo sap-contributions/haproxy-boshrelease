@@ -24,10 +24,10 @@ HAPROXY_VERSION = "3.2"
 LUA_VERSION = "5.4"
 PCRE_VERSION = "10"
 HATOP_VERSION = "0"
-AWS_LC_VERSION = "1"
-CMAKE_VERSION = "3.31"
-AWS_LC_FIPS_VERSION = "3"
-GOLANG_VERSION = "1.26"
+AWS_LC_VERSION = "5"
+CMAKE_VERSION = "4"
+AWS_LC_FIPS_VERSION = "4"
+GOLANG_VERSION = "1.27"
 
 # Required Environment Vars
 BLOBSTORE_SECRET_ACCESS_KEY = os.environ["GCP_SERVICE_KEY"]
@@ -611,7 +611,7 @@ def main() -> None:
             "AWS_LC_FIPS_VERSION",
             AWS_LC_FIPS_VERSION,
             "https://github.com/aws/aws-lc",
-            tagname_prefix="AWS-LC-FIPS-",
+            tagname_prefix="v",
         ),
         GithubDependency(
             "cmake",

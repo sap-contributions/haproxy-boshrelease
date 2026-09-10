@@ -12,7 +12,7 @@ export GOCACHE=${BOSH_INSTALL_TARGET}/gocache
 export PATH=${GOROOT}/bin:$PATH
 
 tar xzf haproxy/aws-lc-fips-${AWS_LC_FIPS_VERSION}.tar.gz
-pushd aws-lc-AWS-LC-FIPS-${AWS_LC_FIPS_VERSION}
+pushd aws-lc-${AWS_LC_FIPS_VERSION}
   mkdir -p build && cd build
   cmake -DCMAKE_BUILD_TYPE=Release \
         -DFIPS=1 \

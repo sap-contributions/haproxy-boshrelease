@@ -31,10 +31,14 @@ pushd socat-${SOCAT_VERSION}
 popd
 
 # --- AWS-LC support (conditional) ---
-# If an AWS-LC FIPS source tarball is present, build with FIPS support.
-# If a non-FIPS AWS-LC source tarball is present, build without FIPS.
-# Otherwise, use system OpenSSL.
-if ls haproxy/aws-lc-fips-*.tar.gz 1>/dev/null 2>&1; then
+# Both FIPS and non-FIPS build from the same AWS-LC LTS source tarball
+# (aws-lc-v${AWS_LC_VERSION}.tar.gz); FIPS is a build-time flag (-DFIPS=1), not
+# a separate source. The FIPS build additionally needs the Go toolchain for the
+# delocate/inject_hash step, so presence of the golang blob is the FIPS signal.
+#   golang blob present  -> AWS-LC FIPS build
+#   aws-lc blob present  -> AWS-LC non-FIPS build
+#   neither              -> system OpenSSL
+if ls haproxy/golang-*.tar.gz 1>/dev/null 2>&1; then
   # --- AWS-LC FIPS build ---
   echo "Installing Go toolchain..."
   tar xzf haproxy/golang-${GOLANG_VERSION}.tar.gz -C ${BOSH_INSTALL_TARGET}
@@ -49,8 +53,8 @@ if ls haproxy/aws-lc-fips-*.tar.gz 1>/dev/null 2>&1; then
   export PATH=${BOSH_INSTALL_TARGET}/bin:$PATH
 
   echo "Building AWS-LC (FIPS)..."
-  tar xzf haproxy/aws-lc-fips-${AWS_LC_FIPS_VERSION}.tar.gz
-  pushd aws-lc-${AWS_LC_FIPS_VERSION}
+  tar xzf haproxy/aws-lc-v${AWS_LC_VERSION}.tar.gz
+  pushd aws-lc-${AWS_LC_VERSION}
     mkdir -p build && cd build
     cmake -DCMAKE_BUILD_TYPE=Release \
           -DFIPS=1 \
@@ -65,7 +69,7 @@ if ls haproxy/aws-lc-fips-*.tar.gz 1>/dev/null 2>&1; then
 
   SSL_MAKE_FLAGS="USE_OPENSSL_AWSLC=1 SSL_INC=${BOSH_INSTALL_TARGET}/include SSL_LIB=${BOSH_INSTALL_TARGET}/lib"
 
-elif ls haproxy/aws-lc-*.tar.gz 1>/dev/null 2>&1; then
+elif ls haproxy/aws-lc-v*.tar.gz 1>/dev/null 2>&1; then
   # --- AWS-LC non-FIPS build ---
   echo "Installing cmake (prebuilt binary)..."
   tar xzf haproxy/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz

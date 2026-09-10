@@ -101,7 +101,7 @@ function bosh_release() {
             ;;
         awslc-fips)
             echo "----- Adding AWS-LC FIPS blobs to haproxy package spec..."
-            echo "- haproxy/aws-lc-fips-*.tar.gz" >> packages/haproxy/spec
+            echo "- haproxy/aws-lc-v*.tar.gz" >> packages/haproxy/spec
             echo "- haproxy/cmake-*.tar.gz" >> packages/haproxy/spec
             echo "- haproxy/golang-*.tar.gz" >> packages/haproxy/spec
             ;;

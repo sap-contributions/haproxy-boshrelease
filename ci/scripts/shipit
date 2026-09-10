@@ -86,20 +86,20 @@ PCRE_VERSION=$(version PCRE_VERSION)
 KEEPALIVED_VERSION=$(version KEEPALIVED_VERSION keepalived)
 AWS_LC_VERSION=$(version AWS_LC_VERSION)
 CMAKE_VERSION=$(version CMAKE_VERSION)
-AWS_LC_FIPS_VERSION=$(version AWS_LC_FIPS_VERSION)
 GOLANG_VERSION=$(version GOLANG_VERSION)
 
 VERSION="${VERSION_TO_CREATE}+${HAPROXY_VERSION}"
 
-# Variant suffixes embed the upstream AWS-LC versions so the resulting
+# Variant suffixes embed the upstream AWS-LC version so the resulting
 # release versions (and tarball filenames) are self-describing. Mirrors the
-# scheme used by scripts/dev-build.sh.
+# scheme used by scripts/dev-build.sh. Both FIPS and non-FIPS build from the
+# same AWS-LC LTS source, so they share ${AWS_LC_VERSION}.
 PATCHED_SUFFIX="patched"
 AWSLC_SUFFIX="awslc-${AWS_LC_VERSION}"
 AWSLC_PATCHED_SUFFIX="awslc-${AWS_LC_VERSION}-patched"
-AWSLC_FIPS_SUFFIX="awslc-fips-${AWS_LC_FIPS_VERSION}"
-AWSLC_FIPS_PATCHED_SUFFIX="awslc-fips-${AWS_LC_FIPS_VERSION}-patched"
-MULTI_SUFFIX="multi-awslc-${AWS_LC_VERSION}-fips-${AWS_LC_FIPS_VERSION}"
+AWSLC_FIPS_SUFFIX="awslc-fips-${AWS_LC_VERSION}"
+AWSLC_FIPS_PATCHED_SUFFIX="awslc-fips-${AWS_LC_VERSION}-patched"
+MULTI_SUFFIX="multi-awslc-${AWS_LC_VERSION}"
 
 cd "${REPO_ROOT}"
 header "Create final release..."
@@ -158,8 +158,7 @@ The following versions of upstream components are included in this haproxy-boshr
 | Lua         | \`${LUA_VERSION}\` |
 | PCRE        | \`${PCRE_VERSION}\` |
 | socat       | \`${SOCAT_VERSION}\` |
-| AWS-LC      | \`${AWS_LC_VERSION}\` |
-| AWS-LC FIPS | \`${AWS_LC_FIPS_VERSION}\` |
+| AWS-LC (LTS) | \`${AWS_LC_VERSION}\` |
 | cmake       | \`${CMAKE_VERSION}\` |
 | Go          | \`${GOLANG_VERSION}\` |
 
@@ -231,7 +230,7 @@ pushd "${REPO_ROOT}"
   git reset --hard
 
   # --- AWS-LC FIPS variant (unpatched) ---
-  echo "- haproxy/aws-lc-fips-*.tar.gz" >> packages/haproxy/spec
+  echo "- haproxy/aws-lc-v*.tar.gz" >> packages/haproxy/spec
   echo "- haproxy/cmake-*.tar.gz" >> packages/haproxy/spec
   echo "- haproxy/golang-*.tar.gz" >> packages/haproxy/spec
 
@@ -244,7 +243,7 @@ pushd "${REPO_ROOT}"
   # --- AWS-LC FIPS + Patched variant ---
   ensure_patches_blob
   echo "- haproxy/patches.tar.gz" >> packages/haproxy/spec
-  echo "- haproxy/aws-lc-fips-*.tar.gz" >> packages/haproxy/spec
+  echo "- haproxy/aws-lc-v*.tar.gz" >> packages/haproxy/spec
   echo "- haproxy/cmake-*.tar.gz" >> packages/haproxy/spec
   echo "- haproxy/golang-*.tar.gz" >> packages/haproxy/spec
 

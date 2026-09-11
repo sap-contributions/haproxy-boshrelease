@@ -277,7 +277,7 @@ class GithubDependency(Dependency):
     tagname_prefix: str = ""
 
     def fetch_latest_release(self) -> Release:
-        repo_org_and_name = self.root_url.lstrip("https://github.com/")
+        repo_org_and_name = self.root_url.removeprefix("https://github.com/")
         repo = gh.get_repo(repo_org_and_name)
         releases = repo.get_releases()
 
@@ -294,7 +294,7 @@ class GithubDependency(Dependency):
         for rel in releases:
             if rel.prerelease:
                 continue
-            current_raw = rel.tag_name.lstrip(self.tagname_prefix)
+            current_raw = rel.tag_name.removeprefix(self.tagname_prefix)
             current_version = version.parse(current_raw)
             if latest_version < current_version and current_raw.startswith(self.pinned_version):
                 latest_version = current_version
@@ -395,38 +395,45 @@ class GolangDependency(Dependency):
 @dataclass
 class GithubArchiveDependency(Dependency):
     """
-    For GitHub repos where releases don't have downloadable assets,
-    so we use the archive tarball URL instead.
+    For GitHub repos where we resolve versions from git tags and download the
+    archive tarball, rather than from published Releases with attached assets.
+    AWS-LC LTS point releases (e.g. 4.0.1) are tagged but not always published
+    as GitHub Releases, so tag-based resolution avoids silently missing a bump.
     """
 
     tagname_prefix: str = ""
 
     def fetch_latest_release(self) -> Release:
-        repo_org_and_name = self.root_url.lstrip("https://github.com/")
+        repo_org_and_name = self.root_url.removeprefix("https://github.com/")
         repo = gh.get_repo(repo_org_and_name)
-        releases = repo.get_releases()
+        tags = repo.get_tags()
 
         latest_release = None
         latest_version = version.parse("0.0.0")
 
-        for rel in releases:
-            if rel.prerelease:
+        for tag in tags:
+            current_raw = tag.name.removeprefix(self.tagname_prefix)
+            if not current_raw.startswith(self.pinned_version):
                 continue
-            current_raw = rel.tag_name.lstrip(self.tagname_prefix)
-            current_version = version.parse(current_raw)
-            if latest_version < current_version and current_raw.startswith(self.pinned_version):
+            try:
+                current_version = version.parse(current_raw)
+            except version.InvalidVersion:
+                # tags that aren't plain version numbers (e.g. FIPS branch tags)
+                continue
+            if current_version.is_prerelease:
+                continue
+            if latest_version < current_version:
                 latest_version = current_version
-                tag = rel.tag_name
-                url = f"{self.root_url}/archive/refs/tags/{tag}.tar.gz"
+                url = f"{self.root_url}/archive/refs/tags/{tag.name}.tar.gz"
                 latest_release = Release(
-                    rel.title,
+                    tag.name,
                     url,
                     self.blob_filename(current_version),
                     current_version,
                 )
 
         if latest_version == version.parse("0.0.0") or latest_release is None:
-            raise Exception(f"No release found for '{self.root_url}'")
+            raise Exception(f"No tag found for '{self.root_url}'")
 
         return latest_release
 

@@ -8,6 +8,9 @@ if [ -d "/var/vcap/packages/haproxy-<%= ssl_variant %>" ]; then
   HAPROXY_PKG="/var/vcap/packages/haproxy-<%= ssl_variant %>"
 else
   HAPROXY_PKG="/var/vcap/packages/haproxy"
+<%- if ssl_variant != "openssl" -%>
+  echo "$(date): WARNING: ha_proxy.ssl_variant='<%= ssl_variant %>' was requested but package 'haproxy-<%= ssl_variant %>' is not installed; falling back to ${HAPROXY_PKG}. Single-variant releases ignore ssl_variant (it only applies to the multi release)." >&2
+<%- end -%>
 fi
 export PATH=$PATH:${HAPROXY_PKG}/bin:/var/vcap/packages/ttar/bin
 CONFIG=/var/vcap/jobs/haproxy/config/haproxy.config

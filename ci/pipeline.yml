@@ -271,7 +271,7 @@ jobs:
     plan:
     - do:
       - in_parallel:
-          - { get: git,     trigger: true,  passed: [acceptance-tests] }
+          - { get: git,     trigger: true,  passed: [acceptance-tests, acceptance-tests-awslc, acceptance-tests-awslc-fips] }
           - { get: version, trigger: false, params: {pre: rc} }
       - put: version
         params: {file: version/number}

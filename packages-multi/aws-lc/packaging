@@ -1,6 +1,6 @@
 set -euxo pipefail
 
-source haproxy-versions.sh
+source aws-lc-versions.sh
 
 export PATH=/var/vcap/packages/cmake/bin:$PATH
 

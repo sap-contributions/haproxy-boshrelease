@@ -40,6 +40,7 @@ DRY_RUN = "DRY_RUN" in os.environ
 # Other Global Variables
 BLOBS_PATH = "config/blobs.yml"
 VERSIONS_PATH = "src/haproxy-versions.sh"
+AWS_LC_VERSIONS_PATH = "src/aws-lc-versions.sh"
 PACKAGING_PATH = "packages/{}/packaging"
 
 
@@ -111,6 +112,10 @@ class Dependency:
     package: str = "haproxy"
     filename_suffix: str = ".tar.gz"
     blob_version_prefix: str = ""
+    # Explicit path to the file holding this dependency's version constant.
+    # Defaults (below) to src/haproxy-versions.sh for package "haproxy"; the
+    # crypto deps override it to src/aws-lc-versions.sh.
+    versions_path: Optional[str] = None
     remote_repo = gh.get_repo(f"{PR_ORG}/haproxy-boshrelease")
 
     _latest_release: Optional[Release] = None
@@ -122,6 +127,8 @@ class Dependency:
 
     @property
     def versions_file(self) -> str:
+        if self.versions_path:
+            return self.versions_path
         if self.package == "haproxy":
             return VERSIONS_PATH
         return PACKAGING_PATH.format(self.package)
@@ -605,6 +612,7 @@ def main() -> None:
             "https://github.com/aws/aws-lc",
             tagname_prefix="v",
             blob_version_prefix="v",
+            versions_path=AWS_LC_VERSIONS_PATH,
         ),
         GithubDependency(
             "cmake",
@@ -616,12 +624,14 @@ def main() -> None:
             # both selects the right release asset and produces a blob name
             # (cmake-X.Y.Z-linux-x86_64.tar.gz) matching the packaging scripts.
             filename_suffix="-linux-x86_64.tar.gz",
+            versions_path=AWS_LC_VERSIONS_PATH,
         ),
         GolangDependency(
             "golang",
             "GOLANG_VERSION",
             GOLANG_VERSION,
             "https://go.dev/dl/",
+            versions_path=AWS_LC_VERSIONS_PATH,
         ),
     ]
 

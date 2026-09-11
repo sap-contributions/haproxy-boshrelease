@@ -73,10 +73,14 @@ version() {
   package=${2:-}
   if [[ -n "${package}" ]]; then
     source_file="${REPO_ROOT}/packages/${package}/packaging"
+    sed -n -E "${pattern//VERSION/${1:?}}" "${source_file}" | sed 's/ *//g'
   else
-    source_file="${REPO_ROOT}/src/haproxy-versions.sh"
+    # AWS_LC_VERSION / CMAKE_VERSION / GOLANG_VERSION live in aws-lc-versions.sh;
+    # the rest in haproxy-versions.sh. Each var appears in exactly one, so search both.
+    sed -n -E "${pattern//VERSION/${1:?}}" \
+      "${REPO_ROOT}/src/haproxy-versions.sh" \
+      "${REPO_ROOT}/src/aws-lc-versions.sh" | sed 's/ *//g'
   fi
-  sed -n -E "${pattern//VERSION/${1:?}}" "${source_file}" | sed 's/ *//g'
 }
 
 HAPROXY_VERSION=$(version HAPROXY_VERSION)

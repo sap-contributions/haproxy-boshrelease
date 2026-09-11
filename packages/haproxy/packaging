@@ -2,6 +2,7 @@
 set -euxo pipefail
 
 source haproxy-versions.sh
+source aws-lc-versions.sh
 
 mkdir ${BOSH_INSTALL_TARGET}/bin
 

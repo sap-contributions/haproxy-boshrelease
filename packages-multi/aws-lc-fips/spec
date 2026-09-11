@@ -5,4 +5,4 @@ dependencies:
 files:
 - haproxy/aws-lc-v*.tar.gz
 - haproxy/golang-*.tar.gz
-- haproxy-versions.sh
+- aws-lc-versions.sh

@@ -8,3 +8,4 @@ files:
 - haproxy/hatop-*
 - hatop-wrapper
 - haproxy-versions.sh
+- aws-lc-versions.sh

@@ -40,6 +40,8 @@ cd "$SCRIPT_DIR/.."
 # tarball filenames self-describing.
 # shellcheck disable=SC1091
 source src/haproxy-versions.sh
+# shellcheck disable=SC1091
+source src/aws-lc-versions.sh
 
 ALL_VARIANTS=(openssl openssl-patched awslc awslc-patched awslc-fips awslc-fips-patched multi)
 
@@ -131,6 +133,11 @@ SPEC_FILE="packages/haproxy/spec"
 SPEC_ORIG=$(cat "$SPEC_FILE")
 JOB_SPEC_FILE="jobs/haproxy/spec"
 JOB_SPEC_ORIG=$(cat "$JOB_SPEC_FILE")
+# `bosh add-blob` (used below for the ephemeral patches.tar.gz) rewrites
+# config/blobs.yml. Snapshot it so cleanup can restore the committed state and
+# the on-the-fly patches blob never leaks into the working tree.
+BLOBS_FILE="config/blobs.yml"
+BLOBS_ORIG=$(cat "$BLOBS_FILE")
 
 copy_multi_packages() {
   cp -r packages-multi/* packages/
@@ -145,6 +152,7 @@ remove_multi_packages() {
 cleanup() {
   echo "$SPEC_ORIG" > "$SPEC_FILE"
   echo "$JOB_SPEC_ORIG" > "$JOB_SPEC_FILE"
+  echo "$BLOBS_ORIG" > "$BLOBS_FILE"
   remove_multi_packages
   rm -f haproxy-patches.tar.gz
 }

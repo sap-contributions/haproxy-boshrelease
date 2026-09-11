@@ -2,4 +2,4 @@
 name: cmake
 files:
 - haproxy/cmake-*.tar.gz
-- haproxy-versions.sh
+- aws-lc-versions.sh

@@ -3,6 +3,7 @@ set -euxo pipefail
 
 source haproxy-versions.sh
 source aws-lc-versions.sh
+PKG_ROOT=$(pwd)
 
 mkdir ${BOSH_INSTALL_TARGET}/bin
 
@@ -103,21 +104,8 @@ fi
 echo "Unpacking HAproxy..."
 tar xf haproxy/haproxy-${HAPROXY_VERSION}.tar.gz
 pushd haproxy-${HAPROXY_VERSION}
-  if [ -f ../haproxy/patches.tar.gz ]; then
-    mkdir -p ${BOSH_INSTALL_TARGET}/applied-patches
-    tar xf ../haproxy/patches.tar.gz
-
-    for patchfile in haproxy-patches/*.patch; do
-      echo "Applying patch file ${patchfile}"
-
-      # Conservatively limit patch fuzz factor to 0 to reduce chance of faulty patch
-      patch -F 0 -p0 < ${patchfile}
-
-      # Save patches in install target for inspection later
-      cp ${patchfile} ${BOSH_INSTALL_TARGET}/applied-patches
-    done
-
-    rm -r haproxy-patches
+  if [ -f ${PKG_ROOT}/haproxy/patches.tar.gz ]; then
+    source ${PKG_ROOT}/apply-patches.sh
   fi
 
   echo "Installing HAproxy..."

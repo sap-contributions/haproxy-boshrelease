@@ -9,3 +9,4 @@ files:
 - hatop-wrapper
 - haproxy-versions.sh
 - aws-lc-versions.sh
+- apply-patches.sh

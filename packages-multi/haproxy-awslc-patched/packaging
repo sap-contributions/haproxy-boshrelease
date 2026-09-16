@@ -2,6 +2,7 @@ set -euxo pipefail
 
 source haproxy-versions.sh
 DEPS_DIR=/var/vcap/packages/haproxy-deps
+PKG_ROOT=$(pwd)
 
 mkdir ${BOSH_INSTALL_TARGET}/bin
 
@@ -10,15 +11,7 @@ SSL_MAKE_FLAGS="USE_OPENSSL_AWSLC=1 SSL_INC=/var/vcap/packages/aws-lc/include SS
 echo "Unpacking HAproxy..."
 tar xf haproxy/haproxy-${HAPROXY_VERSION}.tar.gz
 pushd haproxy-${HAPROXY_VERSION}
-  mkdir -p ${BOSH_INSTALL_TARGET}/applied-patches
-  tar xf ../haproxy/patches.tar.gz
-
-  for patchfile in haproxy-patches/*.patch; do
-    echo "Applying patch file ${patchfile}"
-    patch -F 0 -p0 < ${patchfile}
-    cp ${patchfile} ${BOSH_INSTALL_TARGET}/applied-patches
-  done
-  rm -r haproxy-patches
+  source ${PKG_ROOT}/apply-patches.sh
 
   echo "Installing HAproxy..."
   make TARGET=linux-glibc USE_PROMEX=1 ${SSL_MAKE_FLAGS} \

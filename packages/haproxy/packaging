@@ -3,6 +3,7 @@ set -euxo pipefail
 
 source haproxy-versions.sh
 source aws-lc-versions.sh
+source detect-ssl-backend.sh
 PKG_ROOT=$(pwd)
 
 mkdir ${BOSH_INSTALL_TARGET}/bin
@@ -40,7 +41,11 @@ popd
 #   golang blob present  -> AWS-LC FIPS build
 #   aws-lc blob present  -> AWS-LC non-FIPS build
 #   neither              -> system OpenSSL
-if ls haproxy/golang-*.tar.gz 1>/dev/null 2>&1; then
+# The detection lives in detect-ssl-backend.sh so it is defined once and can be
+# unit-tested (spec/haproxy/detect_ssl_backend_spec.rb). Order is load-bearing:
+# a FIPS build ships both the aws-lc-v* source and the golang-* toolchain.
+case "$(detect_ssl_backend "${PKG_ROOT}")" in
+awslc-fips)
   # --- AWS-LC FIPS build ---
   echo "Installing Go toolchain..."
   tar xzf haproxy/golang-${GOLANG_VERSION}.tar.gz -C ${BOSH_INSTALL_TARGET}
@@ -71,7 +76,8 @@ if ls haproxy/golang-*.tar.gz 1>/dev/null 2>&1; then
 
   SSL_MAKE_FLAGS="USE_OPENSSL_AWSLC=1 SSL_INC=${BOSH_INSTALL_TARGET}/include SSL_LIB=${BOSH_INSTALL_TARGET}/lib"
 
-elif ls haproxy/aws-lc-v*.tar.gz 1>/dev/null 2>&1; then
+  ;;
+awslc)
   # --- AWS-LC non-FIPS build ---
   echo "Installing cmake (prebuilt binary)..."
   tar xzf haproxy/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz
@@ -96,10 +102,12 @@ elif ls haproxy/aws-lc-v*.tar.gz 1>/dev/null 2>&1; then
 
   SSL_MAKE_FLAGS="USE_OPENSSL_AWSLC=1 SSL_INC=${BOSH_INSTALL_TARGET}/include SSL_LIB=${BOSH_INSTALL_TARGET}/lib"
 
-else
+  ;;
+*)
   # --- System OpenSSL ---
   SSL_MAKE_FLAGS="USE_OPENSSL=1"
-fi
+  ;;
+esac
 
 echo "Unpacking HAproxy..."
 tar xf haproxy/haproxy-${HAPROXY_VERSION}.tar.gz

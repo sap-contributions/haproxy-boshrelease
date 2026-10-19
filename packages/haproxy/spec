@@ -10,3 +10,4 @@ files:
 - haproxy-versions.sh
 - aws-lc-versions.sh
 - apply-patches.sh
+- detect-ssl-backend.sh
